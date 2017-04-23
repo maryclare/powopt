@@ -72,7 +72,7 @@ powThresh <- function(z,
 
       while (u - l > 10^(-7)) {
         m <- (l + (u - l)/2) + lambda*q*(l + (u - l)/2)^(q - 1)
-        if (m > abs(z)) {
+        if (m > abs(z[j])) {
           u <- l + (u - l)/2
         } else {
           l <- l + (u - l)/2
