@@ -69,7 +69,7 @@ powThresh <- function(z,
       beta.bar.0 <- 10^(-14)
 
       if (exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)) == 0) {
-        cat("Cannot continue due to numerical instability resulting from large q and/or small lambda.\n")
+        js[j] <- NA
         break
       }
 
@@ -83,6 +83,10 @@ powThresh <- function(z,
 
       js[j] <- sign(z[j])*beta.bar
     }
+  }
+  if (length(na.omit(js)) < length(z)) {
+    cat("Cannot continue due to numerical instability resulting from large q and/or small lambda.\n")
+    js <- rep(NA, length(z))
   }
   return(js)
 }
@@ -192,6 +196,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
         lambda.ii <- lambda/X.ii
         b.kp.i <- powThresh(z.k.i, lambda = lambda.ii, q = q)
+        if (is.na(b.kp.i)) {return(rep(NA, p))}
         rr <- rr - (b.kp.i - bb[i])*X[, i]
         bb[i] <- b.kp.i
       }
