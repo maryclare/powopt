@@ -2,14 +2,14 @@ Package: powopt
 Type: Package
 Title: Solving Penalized Regression Problems with Power Penalty by Coordinate Descent
 Version: 1.0.0
-Authors@R: person("Maryclare", "Griffin", email = "maryclaregriffin@gmail.com ",
-                  role = c("aut", "cre"))
+Author: Maryclare Griffin
+Maintainer: Maryclare Griffin <maryclaregriffin@gmail.com>
 Description: This package contains two functions. 
     One is the thresholding function for the scalar penalized least squares problem subject to a power penalty.
     The second is a function that solves a penalized regression problem subject to a power penalty via coordinate descent.
     For powers greater than zero and less than or equal to 1, the coordinate descent function implements the algorithm given by Marjanovic and Solo (2014).
     As a special case, the coordinate descent function solves the Lasso regression problem.
-Depends: R (>=3.3.2)
+Depends: R (>= 3.3.2)
 License: GPL-2
 Encoding: UTF-8
 RoxygenNote: 6.0.1
