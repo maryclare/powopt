@@ -1,28 +1,43 @@
 #' Penalized likelihood function, used to differentiate between local modes
-powObj <- function(beta, X, y, sigma.sq.z, lambda, q) {
-  log.lik <- -(1/(2*sigma.sq.z))*(crossprod(crossprod(t(X), beta)) - 2*crossprod(beta, crossprod(X, y))) - lambda*sum(abs(beta)^q)
+powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
+
+  if (is.null(Q)) {Q <- crossprod(X)}
+  if (is.null(l)) {l <- crossprod(X, y)}
+  log.lik <- -(1/(2*sigma.sq))*(crossprod(t(crossprod(beta, Q)), beta) - 2*crossprod(beta, l)) - lambda*sum(abs(beta)^q)
+
   return(-1*log.lik)
 }
 #' Thresholding function for penalized regression with power penalty
 #'
 #' @name powThresh
 #'
-#' @description Gives the value of beta that minimizes (beta - z)^2/2 + lambda|beta|^q for fixed z, lambda and q. For q <= 1, uses thresholding function given in Marjanovic and Solo (2014). For q > 1, computed using fixed point iteration.
+#' @description Gives the value of \eqn{\beta} that minimizes: \cr
+#' \deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
+#' for fixed \eqn{z}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+#' For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
+#' For \eqn{q > 1}, computed using fixed point iteration.
 #'
 #' @usage \code{powThresh(z =  1, lambda = 1, q = 1)}
 #'
 #' @param \code{z} vector of values to find the minimizing beta for (\code{powThresh} is applied coordinatewise when \code{length(z)} > 1)
 #' @param \code{lambda} scalar multiplier applied to penalty
-#' @param \code{q} power of penalty function
+#' @param \code{q} scalar power of penalty function
 #'
-#' @source For q <= 1, uses thresholding function given in Marjanovic and Solo (2014).
-#' Marjanovic, Goran, and Victor Solo. "$ l_ {q} $ Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475.
+#' @source For \eqn{q\le 1}, uses thresholding function given in Marjanovic and Solo (2014).
+#' Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475.
 #'
 #' @export
 powThresh <- function(z,
                      lambda,
                      q) {
-
+  if (q <= 0) {
+    cat("Values of q less than or equal to zero not supported!\n")
+    break
+  }
+  if (lambda < 0) {
+    cat("Values of lambda less zero not supported!\n")
+    break
+  }
   js <- numeric(length(z))
 
   if (q <= 1) {
@@ -63,22 +78,94 @@ powThresh <- function(z,
   }
   return(js)
 }
+#' Coordinate descent for penalized regression with power penalty
+#'
+#' @name powCD
+#'
+#' @description Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
+#' \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
+#' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+#'
+#' This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
+#' \deqn{y = X\beta + \sigma Z}
+#' \deqn{p(\beta_i) = q\lambda^(1/q) exp(-\lambda|\beta_i|^q)/(2 \Gamma(1/q)),}
+#' where elements of Z are independent, standard normal random variates.
+#'
+#' This distribution for elements of \eqn{\beta} is a generalized normal distribution
+#' for \eqn{\beta} with scale \eqn{\alpha = \lambda^(-1/q)} and shape \eqn{\beta = q} (Box and Tiao, 1973).
+#'
+#' For \eqn{q \le 1}, uses coordinate descent algorithm given in Marjanovic and Solo (2014), modified to accomodate X that do not have standardized columns.
+#'
+#' @usage \code{powCD(X = X, y = y, sigma.sq = 1, lambda = 1,
+#'       q = 1, max.iter = 10000,
+#'       print.iter = FALSE,
+#'       tol = 10^(-7), ridge.eps = 10^(-7),
+#'       rand.restart = 0)}
+#'
+#' @param \code{X} design matrix
+#' @param \code{y} response vector
+#' @param \code{sigma.sq} scalar value \eqn{\sigma^2}
+#' @param \code{lambda} scalar value \eqn{\lambda}
+#' @param \code{q} scalar value \eqn{q}
+#' @param \code{max.iter} maximum number of iterations for coordinate descent
+#' @param \code{print.iter} logical value indicating whether iteration count for coordinate descent should be printed
+#' @param \code{tol} scalar tolerance value for assessing whether or not gradient of objective function is sufficiently close to zero
+#' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent
+#' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X}
+#'
+#' @return Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
+#'
+#' Note that a non-\code{NA} solution for \eqn{\beta} guarantees the global minimum has been attained when \eqn{X} is full rank and orthogonal. Otherwise, the solution will only correspond to a global minimum when the conditions on \eqn{X} given in Marjanovic and Solo (2014) are satisfied.
+#'
+#' @source For \eqn{q\le 1}, uses coordinate descent algorithm given by Marjanovic and Solo (2014), modified to accomodate X that do not have standardized columns. \cr
+#'
+#' Box, G. E. P., and G. C. Tiao. "Bayesian inference in statistical inference." Adison-Wesley, Reading, Mass (1973). \cr
+#'
+#' Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475. \cr
+#'
+#' @export
+powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
+                   print.iter = FALSE, tol = 10^(-7), ridge.eps = 10^(-7), rand.restart = 0) {
 
-powCD <- function(X, y, sigma.sq.z, lambda, q, max.iter = 10000,
-                   print.iter = FALSE, tol = 10^(-7), eps = 10^(-7), ridge.start = TRUE, rand.restart = 0) {
 
-  lambda <- sigma.sq.z*lambda
+  if (q <= 0) {
+    cat("Values of q less than or equal to zero not supported!\n")
+    break
+  }
+  if (lambda < 0) {
+    cat("Values of lambda less zero not supported!\n")
+    break
+  }
+  if (sigma.sq <= 0) {
+    cat("Values of sigma.sq less zero or equal to zero not supported!\n")
+    break
+  }
+
+  l <- crossprod(X, y)
+  Q <- crossprod(X)
+
+  orthx <- mean(abs(Q[lower.tri(Q, diag = FALSE)])) <= 10^(-14)
+  fullx <- min(eigen(Q)$values) > 0
+  if (!orthx & rand.restart == 0) {
+    cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
+  }
+  if (orthx & fullx & rand.restart > 0) {
+    cat("The design matrix is full rank and orthogonal and coordinate descent will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
+    rand.restart <- 0
+  }
+
+  lambda <- sigma.sq*lambda
 
   p <- ncol(X)
 
   bb.tmp <- rep(NA, p)
   obj.tmp <- Inf
 
-  iter <- ifelse(ridge.start | rand.restart == 0, 1, rand.restart)
+  iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
 
-  for (l in 1:iter) {
-    if (ridge.start) {
-      bb <- crossprod(solve(crossprod(X) + eps*diag(p)), crossprod(X, y))
+  for (m in 1:iter) {
+    if (m == 1) {
+      bb <- crossprod(solve(Q + ridge.eps*diag(p)), l)
     } else {
       bb <- rnorm(p)
     }
@@ -93,7 +180,7 @@ powCD <- function(X, y, sigma.sq.z, lambda, q, max.iter = 10000,
       }
 
       for (i in 1:p) {
-        X.ii <- crossprod(X[, i])
+        X.ii <- Q[i, i]
         z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
         lambda.ii <- lambda/X.ii
         b.kp.i <- powThresh(z.k.i, lambda = lambda.ii, q = q)
@@ -105,7 +192,7 @@ powCD <- function(X, y, sigma.sq.z, lambda, q, max.iter = 10000,
       opt <- numeric(p)
 
       for (i in 1:p) {
-        X.ii <- crossprod(X[, i])
+        X.ii <- Q[i, i]
         z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
         lambda.ii <- lambda/X.ii
         if (q <= 1) {
@@ -127,7 +214,7 @@ powCD <- function(X, y, sigma.sq.z, lambda, q, max.iter = 10000,
 
     }
     if (!opt.cond) {bb <- rep(Inf, p)}
-    obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq.z = 1, lambda = lambda, q = q)
+    obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
     if (obj.bb <= obj.tmp) {
       bb.tmp <- bb
       obj.tmp <- obj.bb

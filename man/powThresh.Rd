@@ -3,9 +3,24 @@
 \name{powThresh}
 \alias{powThresh}
 \title{Thresholding function for penalized regression with power penalty}
+\source{
+For \eqn{q\le 1}, uses thresholding function given in Marjanovic and Solo (2014).
+Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475.
+}
 \usage{
-powThresh(z, lambda, q)
+\code{powThresh(z =  1, lambda = 1, q = 1)}
+}
+\arguments{
+\item{\code{z}}{vector of values to find the minimizing beta for (\code{powThresh} is applied coordinatewise when \code{length(z)} > 1)}
+
+\item{\code{lambda}}{scalar multiplier applied to penalty}
+
+\item{\code{q}}{scalar power of penalty function}
 }
 \description{
-Gives the value of beta that minimizes (beta - z)^2/2 + lambda|beta|^q for fixed z, lambda and q. For q <= 1, uses thresholding function given in Marjanovic and Solo (2014). For q > 1, computed using fixed point iteration.
+Gives the value of \eqn{\beta} that minimizes: \cr
+\deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
+for fixed \eqn{z}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
+For \eqn{q > 1}, computed using fixed point iteration.
 }

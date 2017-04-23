@@ -4,7 +4,7 @@
 \alias{powObj}
 \title{Penalized likelihood function, used to differentiate between local modes}
 \usage{
-powObj(beta, X, y, sigma.sq.z, lambda, q)
+powObj(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL)
 }
 \description{
 Penalized likelihood function, used to differentiate between local modes
