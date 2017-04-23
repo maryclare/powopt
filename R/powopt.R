@@ -215,7 +215,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
           if (q <= 1) {
             opt[i] <- (abs(bb[i]) >= beta.lambda.ii)*((bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
           } else {
-            opt[i] <- ((bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
+            opt[i] <- (abs(bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
           }
         }
       }
