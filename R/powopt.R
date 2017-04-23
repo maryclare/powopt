@@ -66,7 +66,7 @@ powThresh <- function(z,
   } else {
     for (j in 1:length(js)) {
       beta.bar.0 <- 10^(-14)
-      beta.bar.1 <- beta.bar.0 - f(beta.bar.0, q = q, lambda = lambda, z = z[j])/f.p(beta.bar.0, q = q, lambda = lambda)
+      beta.bar.1 <- beta.bar.0 - (beta.bar.0 + q*lambda*beta.bar.0^(q - 1) - abs(z[j]))/(1 + (q - 1)*q*lambda*beta.bar.0^(q - 2))
 
       while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
         beta.bar.0 <- beta.bar.1
