@@ -68,21 +68,19 @@ powThresh <- function(z,
 
       beta.bar.0 <- 10^(-14)
 
-      # Check for numerical instability that arises when q is very large and lambda is very small (i.e., no shrinkage needed)
-      cons.check <- exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0))
-
-      if (cons.check > 0) {
-
-        beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
-
-        while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
-          beta.bar.0 <- beta.bar.1
-          beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
-        }
-        beta.bar <- beta.bar.1
-      } else {
-        beta.bar <- abs(z[j])
+      if (exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)) == 0) {
+        cat("Cannot continue due to numerical instability resulting from large q and/or small lambda.\n")
+        break
       }
+
+      beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
+
+      while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
+        beta.bar.0 <- beta.bar.1
+        beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
+      }
+      beta.bar <- beta.bar.1
+
       js[j] <- sign(z[j])*beta.bar
     }
   }
@@ -151,10 +149,11 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     break
   }
 
+  p <- ncol(X)
   l <- crossprod(X, y)
   Q <- crossprod(X)
 
-  orthx <- mean(abs(Q[lower.tri(Q, diag = FALSE)])) <= 10^(-14)
+  orthx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
   fullx <- min(eigen(Q)$values) > 0
   if (!orthx & rand.restart == 0) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
@@ -166,7 +165,6 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 
   lambda <- sigma.sq*lambda
 
-  p <- ncol(X)
 
   bb.tmp <- rep(NA, p)
   obj.tmp <- Inf
@@ -223,8 +221,12 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       opt.cond <- (sum(opt) == p)
 
     }
-    if (!opt.cond) {bb <- rep(Inf, p)}
-    obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+    if (!opt.cond) {
+      bb <- rep(Inf, p)
+      obj.bb <- Inf
+    } else {
+      obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+    }
     if (obj.bb <= obj.tmp) {
       bb.tmp <- bb
       obj.tmp <- obj.bb
