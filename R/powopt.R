@@ -28,8 +28,8 @@ powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
 #'
 #' @export
 powThresh <- function(z,
-                     lambda,
-                     q) {
+                      lambda,
+                      q) {
   if (q <= 0) {
     cat("Values of q less than or equal to zero not supported!\n")
     break
@@ -65,14 +65,24 @@ powThresh <- function(z,
     }
   } else {
     for (j in 1:length(js)) {
-      beta.bar.0 <- 10^(-14)
-      beta.bar.1 <- beta.bar.0 - (beta.bar.0 + q*lambda*beta.bar.0^(q - 1) - abs(z[j]))/(1 + (q - 1)*q*lambda*beta.bar.0^(q - 2))
 
-      while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
-        beta.bar.0 <- beta.bar.1
-        beta.bar.1 <- beta.bar.0 - (beta.bar.0 + q*lambda*beta.bar.0^(q - 1) - abs(z[j]))/(1 + (q - 1)*q*lambda*beta.bar.0^(q - 2))
+      beta.bar.0 <- 10^(-14)
+
+      # Check for numerical instability that arises when q is very large and lambda is very small (i.e., no shrinkage needed)
+      cons.check <- exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0))
+
+      if (cons.check > 0) {
+
+        beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
+
+        while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
+          beta.bar.0 <- beta.bar.1
+          beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
+        }
+        beta.bar <- beta.bar.1
+      } else {
+        beta.bar <- abs(z[j])
       }
-      beta.bar <- beta.bar.1
       js[j] <- sign(z[j])*beta.bar
     }
   }
@@ -125,7 +135,7 @@ powThresh <- function(z,
 #'
 #' @export
 powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
-                   print.iter = FALSE, tol = 10^(-7), ridge.eps = 10^(-7), rand.restart = 0) {
+                  print.iter = FALSE, tol = 10^(-7), ridge.eps = 10^(-7), rand.restart = 0) {
 
 
   if (q <= 0) {
