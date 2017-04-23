@@ -66,27 +66,21 @@ powThresh <- function(z,
   } else {
     for (j in 1:length(js)) {
 
-      beta.bar.0 <- 10^(-14)
+      # Compute by bisection
+      l <- 0
+      u <- abs(z[j])
 
-      if (exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)) == 0) {
-        js[j] <- NA
-        break
+      while (u - l > 10^(-7)) {
+        m <- (l + (u - l)/2) + lambda*q*(l + (u - l)/2)^(q - 1)
+        if (m > abs(z)) {
+          u <- l + (u - l)/2
+        } else {
+          l <- l + (u - l)/2
+        }
       }
 
-      beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
-
-      while (abs(beta.bar.1 - beta.bar.0) > 10^(-14)) {
-        beta.bar.0 <- beta.bar.1
-        beta.bar.1 <- beta.bar.0 - (beta.bar.0 + exp(log(q) + log(lambda) + (q - 1)*log(beta.bar.0)) - abs(z[j]))/(1 + exp(log(q - 1) + log(q) + log(lambda) + (q - 2)*log(beta.bar.0)))
-      }
-      beta.bar <- beta.bar.1
-
-      js[j] <- sign(z[j])*beta.bar
+      js[j] <- sign(z[j])*(u - l)/2
     }
-  }
-  if (length(na.omit(js)) < length(z)) {
-    cat("Cannot continue due to numerical instability resulting from large q and/or small lambda.\n")
-    js <- rep(NA, length(z))
   }
   return(js)
 }
