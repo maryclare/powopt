@@ -15,7 +15,7 @@ powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
 #' \deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
 #' for fixed \eqn{z}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
 #' For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
-#' For \eqn{q > 1}, computed using fixed point iteration.
+#' For \eqn{q > 1}, computed bisection.
 #'
 #' @usage \code{powThresh(z =  1, lambda = 1, q = 1)}
 #'
@@ -74,12 +74,14 @@ powThresh <- function(z,
         m <- (l + (u - l)/2) + lambda*q*(l + (u - l)/2)^(q - 1)
         if (m > abs(z[j])) {
           u <- l + (u - l)/2
+        } else if (abs(m - abs(z[j])) < 10^(-14)) {
+           u <- l <- (l + (u - l)/2)
         } else {
           l <- l + (u - l)/2
         }
       }
 
-      js[j] <- sign(z[j])*(u - l)/2
+      js[j] <- sign(z[j])*(u + l)/2
     }
   }
   return(js)
@@ -162,7 +164,6 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   }
 
   lambda <- sigma.sq*lambda
-
 
   bb.tmp <- rep(NA, p)
   obj.tmp <- Inf
