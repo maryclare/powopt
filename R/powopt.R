@@ -119,11 +119,11 @@ powThresh <- function(z,
 #' @param \code{print.iter} logical value indicating whether iteration count for coordinate descent should be printed
 #' @param \code{tol} scalar tolerance value for assessing whether or not gradient of objective function is sufficiently close to zero
 #' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent
-#' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X}
+#' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}
 #'
 #' @return Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
 #'
-#' Note that a non-\code{NA} solution for \eqn{\beta} guarantees the global minimum has been attained when \eqn{X} is full rank and orthogonal. Otherwise, the solution will only correspond to a global minimum when the conditions on \eqn{X} given in Marjanovic and Solo (2014) are satisfied.
+#' Note that a non-\code{NA} solution for \eqn{\beta} for any value of \eqn{q} guarantees the global minimum has been attained when \eqn{X} is full rank and orthogonal. Otherwise, when \eqn{q \le 1} the solution will only correspond to a global minimum when the conditions on \eqn{X} given in Marjanovic and Solo (2014) are satisfied.
 #'
 #' @source For \eqn{q\le 1}, uses coordinate descent algorithm given by Marjanovic and Solo (2014), modified to accomodate X that do not have standardized columns. \cr
 #'
@@ -155,7 +155,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 
   orthx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
   fullx <- min(eigen(Q)$values) > 0
-  if (!orthx & rand.restart == 0) {
+  if (!orthx & rand.restart == 0 & q <= 1) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
   }
   if (orthx & fullx & rand.restart > 0) {
