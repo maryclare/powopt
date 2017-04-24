@@ -146,7 +146,7 @@ In these four examples, we used the default specifications of `powCD`. However, 
     - Note that for orthogonal $\boldsymbol X$ and for some non-orthogonal $\boldsymbol X$ that satisfy the conditions for convergence of coordinate descent given in Marjanovic and Solo (2014), the starting value of $\boldsymbol \beta$ will not matter because coordinate descent is guaranteed to converge. 
 * In some cases, $\boldsymbol X$ will not satisfy the conditions to ensure that coordinate descent converges to a global minimum. For these situations, the user can set `rand.restart` to an integer greater than zero. When `rand.restart` is set to some nonzero value, e.g. $K$, coordinate descent will be repeated $K + 1$ times, where the first time is from the ridge solution and the latter $K$ are from random starting values of $\boldsymbol \beta$. `powCD` returns the value of $\boldsymbol \beta$ that gives the smallest value of the objective function. 
 
-The last point is worth demonstrating with an example. Let's simulate some new data with a non-orthogonal $\boldsymbol X$ and fit the penalized regression problem with $q = 0.5$ and $\lambda = $\lambda = \left(\Gamma\left(2\right)/\Gamma\left(6\right)\right)^{-1/4}$.
+The last point is worth demonstrating with an example. Let's simulate some new data with a non-orthogonal $\boldsymbol X$ and fit the penalized regression problem with $q = 0.5$ and $\lambda = \left(\Gamma\left(2\right)/\Gamma\left(6\right)\right)^{-1/4}$.
 ```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
 n <- 10
 p <- 8
@@ -162,7 +162,7 @@ plot(fit1, fit2, xlab = "Coordinate Descent 1", ylab = "Coordinate Descent 2",
 abline(a = 0, b = 1)
 ```
 
-We see that despite $\boldsymbol X$ being full rank, we do not get convergence to the global minimum for this value of $\boldsymbol X$. In cases like this, a better estimate of $\boldsymbol \beta$ can be obtained by using many random restarts and examining the behavior of the solution as we use more random restarts.
+We see that despite $\boldsymbol X$ being full rank, we do not get convergence to the global minimum for this value of $\boldsymbol X$. In cases like this, a better estimate of $\boldsymbol \beta$ can be obtained by using many random restarts. However, it may not be clear how many random restarts to use.
 We consider estimates using $K_k = 1, \dots, 10$ random restarts. Letting $\hat{\boldsymbol \beta}^{\left(k\right)}$ be the estimate of $\boldsymbol \beta$ obtained from using $K_k$ random restarts, we plot $\left(K_k, \left|\left|\hat{\boldsymbol \beta}^{\left(k\right)} - \hat{\boldsymbol \beta}^{\left(k - 1\right)}\right|\right|^2_2/p\right)$ for $K_k = 2,\dots, 10$.
 ```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
 n <- 10
