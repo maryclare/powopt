@@ -36,17 +36,17 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 
 \item{\code{ridge.eps}}{ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent}
 
-\item{\code{rand.restart}}{number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X}}
+\item{\code{rand.restart}}{number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}}
 }
 \value{
 Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
 
-Note that a non-\code{NA} solution for \eqn{\beta} guarantees the global minimum has been attained when \eqn{X} is full rank and orthogonal. Otherwise, the solution will only correspond to a global minimum when the conditions on \eqn{X} given in Marjanovic and Solo (2014) are satisfied.
+Note that a non-\code{NA} solution for \eqn{\beta} for any value of \eqn{q} guarantees the global minimum has been attained when \eqn{X} is full rank and orthogonal. Otherwise, when \eqn{q \le 1} the solution will only correspond to a global minimum when the conditions on \eqn{X} given in Marjanovic and Solo (2014) are satisfied.
 }
 \description{
 Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
 \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
-for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
 
 This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
 \deqn{y = X\beta + \sigma Z}

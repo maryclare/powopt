@@ -20,7 +20,7 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 \description{
 Gives the value of \eqn{\beta} that minimizes: \cr
 \deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
-for fixed \eqn{z}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+for fixed \eqn{z}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
 For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
 For \eqn{q > 1}, computed bisection.
 }

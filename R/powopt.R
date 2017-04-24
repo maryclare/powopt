@@ -13,7 +13,7 @@ powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
 #'
 #' @description Gives the value of \eqn{\beta} that minimizes: \cr
 #' \deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
-#' for fixed \eqn{z}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+#' for fixed \eqn{z}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
 #' For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
 #' For \eqn{q > 1}, computed bisection.
 #'
@@ -35,7 +35,7 @@ powThresh <- function(z,
     break
   }
   if (lambda < 0) {
-    cat("Values of lambda less zero not supported!\n")
+    cat("Values of lambda less than or equal to zero not supported!\n")
     break
   }
   js <- numeric(length(z))
@@ -92,7 +92,7 @@ powThresh <- function(z,
 #'
 #' @description Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
 #' \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
-#' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda \ge 0} and \eqn{q > 0}. \cr \cr
+#' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
 #'
 #' This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
 #' \deqn{y = X\beta + \sigma Z}
@@ -141,7 +141,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     break
   }
   if (lambda < 0) {
-    cat("Values of lambda less zero not supported!\n")
+    cat("Values of lambda less than or equal to zero not supported!\n")
     break
   }
   if (sigma.sq <= 0) {
