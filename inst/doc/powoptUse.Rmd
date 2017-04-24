@@ -1,0 +1,187 @@
+---
+title: "Using the `powopt` Package"
+author: "Maryclare Griffin"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using the `powopt` Package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+We start by loading in the `powopt` package from GitHub and set a seed because we'll be doing some random number generation.
+```{r, message = FALSE}
+library(devtools)
+install_github("maryclare/powopt")
+library(powopt)
+set.seed(100)
+```
+
+## Using `powThresh`
+
+The `powThresh` function takes the arguments `z`, `lambda` $> 0$ and `q` $> 0$ and returns the solution to the following scalar optimization problem:
+
+$$
+\text{minimize}_\beta\frac{1}{2}\left(\beta - z\right)^2 + \lambda \left|\beta\right|^q.
+$$
+
+We can use `powThresh` to replicate the second panel of Figure 2 of Mazumder, Friedman and Hastie (2011),^[[Mazumder, Rahul, Jerome H. Friedman, and Trevor Hastie. "Sparsenet: Coordinate descent with nonconvex penalties." Journal of the American Statistical Association 106.495 (2011): 1125-1138.](http://amstat.tandfonline.com/doi/abs/10.1198/jasa.2011.tm09738)] which plots values of the threshold function computed by `powThresh` over a range of $z$ for $\lambda = 1$ for several values of $q$.
+
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+qs <- c(0.001, 0.3, 0.7, 1)
+zs <- seq(0, 3, by = 0.001)
+plot(zs, powThresh(zs, lambda = 1, q = qs[1]), type = "l", ylim = c(0, 3),
+     main = "Threshold Functions", xlab = expression(beta), ylab = "")
+for (i in 2:4) {
+  lines(zs, powThresh(zs, lambda = 1, q = qs[i]), lty = i, col = i)
+}
+legend("topleft", col = 1:4, lty = 1:4, legend = qs, cex = 0.75)
+```
+
+This plot is isn't very interpretable if we recall that a penalty can be interpreted as a distribution for $\beta$. Specifically, we can interpret a power penalty of the form $\lambda\left|\beta\right|^q$ as a generalized normal distribution for $\beta$ with variance $\Gamma\left(3/q\right)\lambda^{-2/q}/\Gamma\left(1/q\right)$. This means that the previous plot, we are comparing the optimal values of $\beta$ prior distributions with different variances *and* different penalty powers. 
+
+Another more interpretable plot we can make using `powThresh` compares threshold functions for values of $q$ that hold the variance of the distribution of elements of $\beta$ constant at $1$ by setting $\lambda = \left(\Gamma\left(1/q\right)/\Gamma\left(3/q\right)\right)^{-q/2}$ for each value of $q$.
+
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+qs <- c(0.25, 0.5, 1, 1.25, 2, 3)
+sigma.sq.beta <- 1
+zs <- seq(0, 5, by = 0.001)
+plot(zs, powThresh(zs, lambda = (sigma.sq.beta*gamma(1/qs[1])/gamma(3/qs[1]))^(-qs[1]/2), q = qs[1]), type = "l",
+     xlab = "z", ylab = expression(beta))
+for (i in 2:length(qs)) {
+  q <- qs[i]
+  lines(zs, powThresh(zs, lambda = (sigma.sq.beta*gamma(1/q)/gamma(3/q))^(-q/2), q = q), lty = i, col = i)
+}
+legend("topleft", legend = qs, col = 1:length(qs), lty = 1:length(qs), cex = 0.75)
+```
+
+## Understanding What `powThresh` Does
+
+When $q \leq 1$, the solution is computed using the method described in Marjanovic and Solo (2014).^[[Marjanovic, Goran, and Victor Solo. "$l_{q}$ Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475.](http://ieeexplore.ieee.org/abstract/document/6725680/)] When $q > 1$, the solution is computed as follows. Like in Marjanovic and Solo (2014), we assume that the optimal value of $\gamma$ will have the same sign as $z$. This allows us to reduce the original problem to the simpler problem:
+$$
+\text{minimize}_{\gamma > 0}\frac{1}{2}\left(\gamma - \left|z\right|\right)^2 + \lambda \gamma^q.
+$$
+The optimal $\gamma$ solves:
+$$
+\gamma + \lambda q \gamma^{q - 1} = \left|z\right|.
+$$
+$\gamma + \lambda q \gamma^{q - 1}$ is monotonically increasing for $\gamma > 0$. Accordingly, we can find the optimal value of $\gamma$ by bisection. 
+Because $\gamma + \lambda q \gamma^{q - 1} \geq 0$ and $\gamma + \lambda q \gamma^{q - 1} \geq \gamma$ for all $\gamma \geq 0$, we can be sure that the optimal value of $\gamma$ is in the interval $\left[0,\left|z\right|\right]$. Taking $l^{\left(0\right)} = 0$,  $u^{\left(0\right)} = \left|z\right|$ and $\gamma^{\left(0\right)} = l^{\left(0\right)} + \left(u^{\left(0\right)} - l^{\left(0\right)}\right)/2$ and setting $k = 0$, the bisection algorithm is as follows:
+
+* Set  $z^{\left(k\right)} = \gamma^{\left(k\right)} + \lambda q \left(\gamma^{\left(k\right)}\right)^{q - 1}$.
+* Compare $z^{\left(k\right)}$ to $\left|z\right|$. 
+    - If $z^{\left(k\right)} = \left|z\right|$, take $l^{\left(k + 1\right)} = u^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
+    - If $z^{\left(k\right)} > \left|z\right|$, keep $l^{\left(k + 1\right)} = l^{\left(k\right)}$ and set $u^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
+    - If $z^{\left(k\right)} < \left|z\right|$, keep $u^{\left(k + 1\right)} = u^{\left(k\right)}$ and set $l^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
+* Set $\gamma^{\left(k + 1\right)} = l^{\left(k + 1\right)} + \left(u^{\left(k + 1\right)} - l^{\left(k + 1\right)}\right)/2$. 
+    - If $u^{\left(k + 1\right)} = l^{\left(k + 1\right)}$ set the optimal value of $\beta$ to $\text{sign}\left(z\right)\gamma^{\left(k + 1\right)}$.
+    - If $u^{\left(k + 1\right)} \neq l^{\left(k + 1\right)}$, repeat these steps.
+
+
+# Using `powCD`
+
+Generally, we won't be using `powThresh` on its own, rather we'll be using it as part of a coordinate descent algorithm that solves a penalized regression problem. `powCD` implements coordinate descent, using `powThresh`, to solve the following optimization problem over a $p \times 1$ vector $\boldsymbol \beta$:
+$$
+\text{minimize}_{\boldsymbol \beta}\frac{1}{2\sigma^2}\left|\left|\boldsymbol y - \boldsymbol X \boldsymbol \beta\right|\right|^2_2 + \lambda \left|\left|\boldsymbol \beta\right|\right|_q^q.
+$$
+
+We can try it out on some simulated data, using an orthogonal design matrix $\boldsymbol X$ to start and setting $\lambda$ given $q = 2$ to ensure that the variance implied by the penalty is equal to $1$, the true variance of our simulated elements of $\boldsymbol \beta$. We use the default specifications of the arguments of `powCD`; they should be sufficient when $\boldsymbol X$ is orthogonal. As a sanity check, we compare our estimates to the closed form solution that is available when $q = 2$ (the ridge regression solution). 
+
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+n <- 5
+p <- 3
+X <- svd(matrix(rnorm(n*p), nrow = n, ncol = p))$u
+beta <- rnorm(p)
+y <- X%*%beta + rnorm(n)
+q <-  2
+lambda <- (gamma(1/q)/gamma(3/q))^(-q/2) 
+fit <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambda, q = q)
+plot(fit, solve(crossprod(X) + diag(p))%*%crossprod(X, y), xlab = "Coordinate Descent", ylab = "Closed Form",
+     main = expression(paste("Estimate of ", beta, sep = "")))
+abline(a = 0, b = 1)
+```
+
+Using the same data but setting $q = 1000$ and resetting $\lambda$ given $q = 1000$ to ensure that the variance implied by the penalty is still equal to $1$, we use `powCD` again with the default specifications. For such large $q$ but the same variance, our estimates should be converging to the unpenalized OLS estimates. We compare our coordinate descent estimates to the closed form OLS solution and see that they are in fact quite similar, as we would hope. 
+
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+q <-  1000
+lambda <- (gamma(1/q)/gamma(3/q))^(-q/2) 
+fit <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambda, q = q)
+plot(fit, solve(crossprod(X))%*%crossprod(X, y), xlab = "Coordinate Descent", ylab = "Closed Form",
+     main = expression(paste("Estimate of ", beta, sep = "")))
+abline(a = 0, b = 1)
+```
+
+As a last example, we'll plot solution paths for $q = 1$ and $q = 0.5$ over different values of $\lambda$.
+```{r, fig.show='hold'}
+qs <-  c(1, 0.5)
+lambdas <- seq(0.1, 4, length.out = 100)
+fits <- array(dim = c(p, length(lambdas), length(qs)))
+for (i in 1:length(lambdas)) {
+  for (j in 1:length(qs)) {
+    fits[, i, j] <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambdas[i], q = qs[j])
+  }
+}
+for (j in 1:length(qs)) { 
+  plot(log(lambdas), fits[1, , j], 
+       ylim = range(fits), type = "l", 
+       xlab = expression(paste("log(", lambda, ")", sep = "")), 
+       ylab = expression(beta), main = paste("q=", q, "\n"))
+  for (i in 2:p) {
+    lines(log(lambdas), fits[i, , j], col = i)
+  }
+}
+legend("topleft", c(expression(beta[1]),
+                        expression(beta[2]),
+                        expression(beta[3])), col = 1:3, lty = 1, cex = 0.75)
+```
+
+
+In these four examples, we used the default specifications of `powCD`. However, we can adjust various aspects of the coordinate descent algorithm as follows:
+
+* The default specification of `max.iter` is $10000$. This refers to the number of iterations of coordinate descent performed (where a single iteration involves cycling through all of the elements of $\boldsymbol \beta$). Increasing this value allows us to perform more iterations of gradient descent.
+* The default specification of `print.iter` is `FALSE`. If we set it to `TRUE`, the `powCD` will print an update each iteration. Generally the updates are a nuisance, but they can be helpful for monitoring progress when the dimensions of the data are large and coordinate descent is slow.
+* The default specification of `tol` is $10^{-7}$. The solution to a penalized regression problem must satisfy the $p$ equalities obtained by differentiating the objective function. It isn't tractable to require that the $p$ equalities hold exactly. Instead we require that they nearly hold with tolerance given by `tol`, e.g. rather than requiring $a = 0$ we require $\left|a\right| \leq $`tol`. Smaller values of `tol` can give us slightly better solutions for $\boldsymbol \beta$, but can result in impractically slow coordinate descent algorithms especially when $q \leq 1$.
+* To speed up coordinate descent by making sure it starts in the neighborhood of the optimal $\boldsymbol \beta$, we start our coordinate descent algorithm at the ridge solution with ridge parameter `ridge.eps`. The default, `ridge.eps` $=10^{-7}$, indicates that we start at $\tilde{\boldsymbol \beta} = \left(\boldsymbol X'\boldsymbol X + 10^{-7} \boldsymbol I_p\right)^{-1}\boldsymbol X'\boldsymbol y$. If $\boldsymbol X$ is not full rank, the default value of `ridge.eps` may not be large enough for $\boldsymbol X'\boldsymbol X + 10^{-7} \boldsymbol I_p$ to be invertible. In this case, we may want to increase `ridge.eps`.
+    - Note that for orthogonal $\boldsymbol X$ and for some non-orthogonal $\boldsymbol X$ that satisfy the conditions for convergence of coordinate descent given in Marjanovic and Solo (2014), the starting value of $\boldsymbol \beta$ will not matter because coordinate descent is guaranteed to converge. 
+* In some cases, $\boldsymbol X$ will not satisfy the conditions to ensure that coordinate descent converges to a global minimum. For these situations, the user can set `rand.restart` to an integer greater than zero. When `rand.restart` is set to some nonzero value, e.g. $K$, coordinate descent will be repeated $K + 1$ times, where the first time is from the ridge solution and the latter $K$ are from random starting values of $\boldsymbol \beta$. `powCD` returns the value of $\boldsymbol \beta$ that gives the smallest value of the objective function. 
+
+The last point is worth demonstrating with an example. Let's simulate some new data with a non-orthogonal $\boldsymbol X$ and fit the penalized regression problem with $q = 0.5$ and $\lambda = $\lambda = \left(\Gamma\left(2\right)/\Gamma\left(6\right)\right)^{-1/4}$.
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+n <- 10
+p <- 8
+X <- matrix(rnorm(n*p), nrow = n, ncol = p)
+beta <- rnorm(p)
+y <- X%*%beta + rnorm(n)
+q <- 0.5
+lambda <- (gamma(1/q)/gamma(3/q))^(-q/2) 
+fit1 <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, rand.restart = 1)
+fit2 <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, rand.restart = 1)
+plot(fit1, fit2, xlab = "Coordinate Descent 1", ylab = "Coordinate Descent 2",
+     main = expression(paste("Estimate of ", beta, sep = "")))
+abline(a = 0, b = 1)
+```
+
+We see that despite $\boldsymbol X$ being full rank, we do not get convergence to the global minimum for this value of $\boldsymbol X$. In cases like this, a better estimate of $\boldsymbol \beta$ can be obtained by using many random restarts and examining the behavior of the solution as we use more random restarts.
+We consider estimates using $K_k = 1, \dots, 10$ random restarts. Letting $\hat{\boldsymbol \beta}^{\left(k\right)}$ be the estimate of $\boldsymbol \beta$ obtained from using $K_k$ random restarts, we plot $\left(K_k, \left|\left|\hat{\boldsymbol \beta}^{\left(k\right)} - \hat{\boldsymbol \beta}^{\left(k - 1\right)}\right|\right|^2_2/p\right)$ for $K_k = 2,\dots, 10$.
+```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
+n <- 10
+p <- 8
+X <- matrix(rnorm(n*p), nrow = n, ncol = p)
+beta <- rnorm(p)
+y <- X%*%beta + rnorm(n)
+q <- 0.5
+lambda <- (gamma(1/q)/gamma(3/q))^(-q/2) 
+rand.restarts <- seq(1, 10, by = 1)
+fits <- matrix(nrow = p, ncol = length(rand.restarts)) 
+diff <- numeric(length(rand.restarts) - 1)
+for (i in 1:length(rand.restarts)) {
+  fits[, i] <- powCD(X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, rand.restart = rand.restarts[i])
+  if (i > 1) {
+    diff[i - 1] <- mean((fits[, i] - fits[, i - 1])^2)
+  }
+}
+plot(rand.restarts[2:length(rand.restarts)], 
+     diff, xlab = "# Random Restarts", ylab = "MSE Compared to Previous Estimate")
+```
+It looks like using 10 random restarts is probably more than enough, although in these situations we can never be sure we've reached the global minimum.
