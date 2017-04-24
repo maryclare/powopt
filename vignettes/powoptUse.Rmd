@@ -38,7 +38,7 @@ for (i in 2:4) {
 legend("topleft", col = 1:4, lty = 1:4, legend = qs, cex = 0.75)
 ```
 
-This plot is isn't very interpretable if we recall that a penalty can be interpreted as a distribution for $\beta$. Specifically, we can interpret a power penalty of the form $\lambda\left|\beta\right|^q$ as a generalized normal distribution for $\beta$ with variance $\Gamma\left(3/q\right)\lambda^{-2/q}/\Gamma\left(1/q\right)$. This means that the previous plot, we are comparing the optimal values of $\beta$ prior distributions with different variances *and* different penalty powers. 
+This plot is isn't very interpretable if we recall that a penalty can be interpreted as a distribution for $\beta$. Specifically, we can interpret a power penalty of the form $\lambda\left|\beta\right|^q$ as a generalized normal distribution for $\beta$ with variance $\Gamma\left(3/q\right)\lambda^{-2/q}/\Gamma\left(1/q\right)$. This means that in the previous plot, we are comparing the optimal values of $\beta$ prior distributions with different variances *and* different penalty powers. 
 
 Another more interpretable plot we can make using `powThresh` compares threshold functions for values of $q$ that hold the variance of the distribution of elements of $\beta$ constant at $1$ by setting $\lambda = \left(\Gamma\left(1/q\right)/\Gamma\left(3/q\right)\right)^{-q/2}$ for each value of $q$.
 
