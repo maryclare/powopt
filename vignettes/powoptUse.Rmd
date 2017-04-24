@@ -112,7 +112,7 @@ plot(fit, solve(crossprod(X))%*%crossprod(X, y), xlab = "Coordinate Descent", yl
 abline(a = 0, b = 1)
 ```
 
-As a last example, we'll plot solution paths for $q = 1$ and $q = 0.5$ over different values of $\lambda$.
+As a last example with an orthogonal $\boldsymbol X$ matrix, we'll plot solution paths for $q = 1$ and $q = 0.5$ over different values of $\lambda$.
 ```{r, fig.show='hold'}
 qs <-  c(1, 0.5)
 lambdas <- seq(0.1, 4, length.out = 100)
@@ -139,7 +139,7 @@ legend("topleft", c(expression(beta[1]),
 
 In these four examples, we used the default specifications of `powCD`. However, we can adjust various aspects of the coordinate descent algorithm as follows:
 
-* The default specification of `max.iter` is $10000$. This refers to the number of iterations of coordinate descent performed (where a single iteration involves cycling through all of the elements of $\boldsymbol \beta$). Increasing this value allows us to perform more iterations of gradient descent.
+* The default specification of `max.iter` is $10000$. This refers to the number of iterations of coordinate descent performed (where a single iteration involves cycling through all of the elements of $\boldsymbol \beta$). Increasing this value allows us to perform more iterations of coordinate descent.
 * The default specification of `print.iter` is `FALSE`. If we set it to `TRUE`, the `powCD` will print an update each iteration. Generally the updates are a nuisance, but they can be helpful for monitoring progress when the dimensions of the data are large and coordinate descent is slow.
 * The default specification of `tol` is $10^{-7}$. The solution to a penalized regression problem must satisfy the $p$ equalities obtained by differentiating the objective function. It isn't tractable to require that the $p$ equalities hold exactly. Instead we require that they nearly hold with tolerance given by `tol`, e.g. rather than requiring $a = 0$ we require $\left|a\right| \leq $`tol`. Smaller values of `tol` can give us slightly better solutions for $\boldsymbol \beta$, but can result in impractically slow coordinate descent algorithms especially when $q \leq 1$.
 * To speed up coordinate descent by making sure it starts in the neighborhood of the optimal $\boldsymbol \beta$, we start our coordinate descent algorithm at the ridge solution with ridge parameter `ridge.eps`. The default, `ridge.eps` $=10^{-7}$, indicates that we start at $\tilde{\boldsymbol \beta} = \left(\boldsymbol X'\boldsymbol X + 10^{-7} \boldsymbol I_p\right)^{-1}\boldsymbol X'\boldsymbol y$. If $\boldsymbol X$ is not full rank, the default value of `ridge.eps` may not be large enough for $\boldsymbol X'\boldsymbol X + 10^{-7} \boldsymbol I_p$ to be invertible. In this case, we may want to increase `ridge.eps`.
