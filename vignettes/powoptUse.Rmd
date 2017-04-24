@@ -162,8 +162,8 @@ plot(fit1, fit2, xlab = "Coordinate Descent 1", ylab = "Coordinate Descent 2",
 abline(a = 0, b = 1)
 ```
 
-We see that despite $\boldsymbol X$ being full rank, we do not get convergence to the global minimum for this value of $\boldsymbol X$. In cases like this, a better estimate of $\boldsymbol \beta$ can be obtained by using many random restarts. However, it may not be clear how many random restarts to use.
-We consider estimates using $K_k = 1, \dots, 10$ random restarts. Letting $\hat{\boldsymbol \beta}^{\left(k\right)}$ be the estimate of $\boldsymbol \beta$ obtained from using $K_k$ random restarts, we plot $\left(K_k, \left|\left|\hat{\boldsymbol \beta}^{\left(k\right)} - \hat{\boldsymbol \beta}^{\left(k - 1\right)}\right|\right|^2_2/p\right)$ for $K_k = 2,\dots, 10$.
+We see that despite $\boldsymbol X$ being full rank, we do not get convergence to the global minimum for this value of $\boldsymbol X$. In cases like this, we might be able to get to the value of $\boldsymbol \beta$ that yields the global minimum by using many random restarts. However, it may not be clear how many random restarts to use.
+We consider solutions obtained using $K_k = 1, \dots, 10$ random restarts. Letting $\hat{\boldsymbol \beta}^{\left(k\right)}$ be the estimate of $\boldsymbol \beta$ obtained from using $K_k$ random restarts, we plot $\left(K_k, \left|\left|\hat{\boldsymbol \beta}^{\left(k\right)} - \hat{\boldsymbol \beta}^{\left(k - 1\right)}\right|\right|^2_2/p\right)$ for $K_k = 2,\dots, 10$.
 ```{r, fig.show='hold', fig.align = 'center', fig.width = 6, fig.height = 6}
 n <- 10
 p <- 8
