@@ -205,7 +205,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         if (k > 1) {
           obj.diff <- obj[k, m] - obj[k - 1, m]
           if (print.iter) {
-            cat("Diff. in Objective=", round(obj.diff, 4), "\n")
+            cat("Objective=", round(obj[k, m], 7), "\n")
           }
           if (abs(obj.diff) < tol) {
             opt.cond <- TRUE
