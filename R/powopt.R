@@ -204,6 +204,9 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         obj[k, m] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
         if (k > 1) {
           obj.diff <- obj[k, m] - obj[k - 1, m]
+          if (print.iter) {
+            cat("Diff. in Objective=", round(obj.diff, 4), "\n")
+          }
           if (abs(obj.diff) < tol) {
             opt.cond <- TRUE
           }
