@@ -169,7 +169,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   obj.tmp <- Inf
 
   iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
-  obj <- matrix(nrow = max.iter, ncol = iter)
+  obj <- matrix(NA, nrow = max.iter, ncol = iter)
   for (m in 1:iter) {
     if (m == 1) {
       bb <- crossprod(solve(Q + ridge.eps*diag(p)), l)
@@ -196,9 +196,9 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         bb[i] <- b.kp.i
       }
 
-      obj[m, k] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+      obj[k, m] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
       if (k > 1) {
-        obj.diff <- obj[m, k] - obj[m, k - 1]
+        obj.diff <- obj[k, m] - obj[k - 1, m]
         if (abs(obj.diff) < tol) {
           opt.cond <- TRUE
         }
@@ -243,5 +243,5 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     }
   }
   if (is.infinite(bb.tmp[1])) {bb.tmp <- rep(NA, p)}
-  return(list("beta" = bb.tmp, "obj" = obj))
+  return(bb.tmp)
 }
