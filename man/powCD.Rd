@@ -32,7 +32,7 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 
 \item{\code{print.iter}}{logical value indicating whether iteration count for coordinate descent should be printed}
 
-\item{\code{tol}}{scalar tolerance value for assessing whether or not gradient of objective function is sufficiently close to zero}
+\item{\code{tol}}{scalar tolerance value for assessing convergence of objective function}
 
 \item{\code{ridge.eps}}{ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent}
 

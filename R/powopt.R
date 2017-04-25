@@ -235,7 +235,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       obj.bb <- Inf
     } else {
       # obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
-      obj.bb <- obj[m, k - 1]
+      obj.bb <- obj[k - 1, m]
     }
     if (obj.bb <= obj.tmp) {
       bb.tmp <- bb
