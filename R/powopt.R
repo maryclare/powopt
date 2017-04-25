@@ -117,7 +117,7 @@ powThresh <- function(z,
 #' @param \code{q} scalar value \eqn{q}
 #' @param \code{max.iter} maximum number of iterations for coordinate descent
 #' @param \code{print.iter} logical value indicating whether iteration count for coordinate descent should be printed
-#' @param \code{tol} scalar tolerance value for assessing whether or not gradient of objective function is sufficiently close to zero
+#' @param \code{tol} scalar tolerance value for assessing convergence of objective function
 #' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent
 #' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}
 #'
