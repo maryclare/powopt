@@ -149,16 +149,17 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     break
   }
 
+  n <- length(y)
   p <- ncol(X)
   l <- crossprod(X, y)
   Q <- crossprod(X)
 
-  orthx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
+  diagxtx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
   fullx <- min(eigen(Q)$values) > 0
-  if (!orthx & rand.restart == 0 & q <= 1) {
+  if (!diagxtx & rand.restart == 0 & q <= 1) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
   }
-  if (orthx & fullx & rand.restart > 0) {
+  if (diagxtx & fullx & rand.restart > 0) {
     cat("The design matrix is full rank and orthogonal and coordinate descent will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
     rand.restart <- 0
   }
@@ -196,11 +197,16 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         bb[i] <- b.kp.i
       }
 
-      obj[k, m] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
-      if (k > 1) {
-        obj.diff <- obj[k, m] - obj[k - 1, m]
-        if (abs(obj.diff) < tol) {
-          opt.cond <- TRUE
+      if (diagxtx) {
+        opt.cond <- TRUE
+      } else {
+
+        obj[k, m] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
+        if (k > 1) {
+          obj.diff <- obj[k, m] - obj[k - 1, m]
+          if (abs(obj.diff) < tol) {
+            opt.cond <- TRUE
+          }
         }
       }
 
