@@ -169,7 +169,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   obj.tmp <- Inf
 
   iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
-
+  obj <- matrix(nrow = max.iter, ncol = iter)
   for (m in 1:iter) {
     if (m == 1) {
       bb <- crossprod(solve(Q + ridge.eps*diag(p)), l)
@@ -195,37 +195,47 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         rr <- rr - (b.kp.i - bb[i])*X[, i]
         bb[i] <- b.kp.i
       }
-      k <- k + 1
 
-      opt <- numeric(p)
-
-      for (i in 1:p) {
-        X.ii <- Q[i, i]
-        z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
-        lambda.ii <- lambda/X.ii
-        if (q <= 1) {
-          beta.lambda.ii <- (2*lambda.ii*(1 - q))^(1/(2 - q))
-          h.lambda.ii <- beta.lambda.ii + lambda.ii*q*beta.lambda.ii^(q - 1)
-        }
-        if (bb[i] == 0) {
-          opt[i] <- abs(bb[i] - z.k.i) <= h.lambda.ii
-        } else {
-          if (q <= 1) {
-            opt[i] <- (abs(bb[i]) >= beta.lambda.ii)*((bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
-          } else {
-            opt[i] <- (abs(bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
-          }
+      obj[m, k] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+      if (k > 1) {
+        obj.diff <- obj[m, k] - obj[m, k - 1]
+        if (abs(obj.diff) < tol) {
+          opt.cond <- TRUE
         }
       }
 
-      opt.cond <- (sum(opt) == p)
+      k <- k + 1
+
+      # opt <- numeric(p)
+      #
+      # for (i in 1:p) {
+      #   X.ii <- Q[i, i]
+      #   z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
+      #   lambda.ii <- lambda/X.ii
+      #   if (q <= 1) {
+      #     beta.lambda.ii <- (2*lambda.ii*(1 - q))^(1/(2 - q))
+      #     h.lambda.ii <- beta.lambda.ii + lambda.ii*q*beta.lambda.ii^(q - 1)
+      #   }
+      #   if (bb[i] == 0) {
+      #     opt[i] <- abs(bb[i] - z.k.i) <= h.lambda.ii
+      #   } else {
+      #     if (q <= 1) {
+      #       opt[i] <- (abs(bb[i]) >= beta.lambda.ii)*((bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
+      #     } else {
+      #       opt[i] <- (abs(bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
+      #     }
+      #   }
+      # }
+      #
+      # opt.cond <- (sum(opt) == p)
 
     }
     if (!opt.cond) {
       bb <- rep(Inf, p)
       obj.bb <- Inf
     } else {
-      obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+      # obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
+      obj.bb <- obj[m, k - 1]
     }
     if (obj.bb <= obj.tmp) {
       bb.tmp <- bb
@@ -233,5 +243,5 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     }
   }
   if (is.infinite(bb.tmp[1])) {bb.tmp <- rep(NA, p)}
-  return(bb.tmp)
+  return(list("beta" = bb.tmp, "obj" = obj))
 }
