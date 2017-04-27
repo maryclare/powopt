@@ -242,13 +242,13 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     if (!opt.cond) {
       bb <- rep(Inf, p)
       obj.bb <- Inf
-    } else {
+    } else if (iter > 1) {
       # obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
       obj.bb <- obj[k - 1, m]
-    }
-    if (obj.bb <= obj.tmp) {
-      bb.tmp <- bb
-      obj.tmp <- obj.bb
+        if (obj.bb <= obj.tmp) {
+          bb.tmp <- bb
+          obj.tmp <- obj.bb
+        }
     }
   }
   if (is.infinite(bb.tmp[1])) {bb.tmp <- rep(NA, p)}
