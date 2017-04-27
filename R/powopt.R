@@ -107,7 +107,7 @@ powThresh <- function(z,
 #' @usage \code{powCD(X = X, y = y, sigma.sq = 1, lambda = 1,
 #'       q = 1, max.iter = 10000,
 #'       print.iter = FALSE,
-#'       tol = 10^(-7), ridge.eps = 10^(-7),
+#'       tol = 10^(-7), ridge.eps = 0,
 #'       rand.restart = 0)}
 #'
 #' @param \code{X} design matrix
@@ -118,7 +118,7 @@ powThresh <- function(z,
 #' @param \code{max.iter} maximum number of iterations for coordinate descent
 #' @param \code{print.iter} logical value indicating whether iteration count for coordinate descent should be printed
 #' @param \code{tol} scalar tolerance value for assessing convergence of objective function
-#' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent
+#' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent, defult is zero
 #' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}
 #'
 #' @return Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.

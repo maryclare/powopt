@@ -14,7 +14,7 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 \code{powCD(X = X, y = y, sigma.sq = 1, lambda = 1,
       q = 1, max.iter = 10000,
       print.iter = FALSE,
-      tol = 10^(-7), ridge.eps = 10^(-7),
+      tol = 10^(-7), ridge.eps = 0,
       rand.restart = 0)}
 }
 \arguments{
@@ -34,7 +34,7 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 
 \item{\code{tol}}{scalar tolerance value for assessing convergence of objective function}
 
-\item{\code{ridge.eps}}{ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent}
+\item{\code{ridge.eps}}{ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent, defult is zero}
 
 \item{\code{rand.restart}}{number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}}
 }
