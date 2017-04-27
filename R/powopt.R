@@ -133,7 +133,7 @@ powThresh <- function(z,
 #'
 #' @export
 powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
-                  print.iter = FALSE, tol = 10^(-7), ridge.eps = 10^(-7), rand.restart = 0) {
+                  print.iter = FALSE, tol = 10^(-7), ridge.eps = 0, rand.restart = 0) {
 
 
   if (q <= 0) {
@@ -159,9 +159,10 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   if (!diagxtx & rand.restart == 0 & q <= 1) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
   }
-  if (diagxtx & fullx & rand.restart > 0) {
-    cat("The design matrix is full rank and orthogonal and coordinate descent will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
+  if (diagxtx & fullx & (rand.restart > 0 | ridge.eps > 0)) {
+    cat("The design matrix is full rank and orthogonal and coordinate descent starting from the OLS solution will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
     rand.restart <- 0
+    ridge.eps <- 0
   }
 
   lambda <- sigma.sq*lambda
@@ -249,6 +250,8 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
           bb.tmp <- bb
           obj.tmp <- obj.bb
         }
+    } else if (iter == 1) {
+      bb.tmp <- bb
     }
   }
   if (is.infinite(bb.tmp[1])) {bb.tmp <- rep(NA, p)}
