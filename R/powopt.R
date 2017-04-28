@@ -1,4 +1,5 @@
 #' Penalized likelihood function, used to differentiate between local modes
+#' @export
 powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
 
   if (is.null(Q)) {Q <- crossprod(X)}
