@@ -15,7 +15,7 @@ powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
 #'
 #' @description Gives the value of \eqn{\beta} that minimizes: \cr
 #' \deqn{(\beta - z)^2/2 + \lambda|\beta|^q} \cr
-#' for fixed \eqn{z}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
+#' for fixed \eqn{z}, \eqn{\lambda > 0} and \eqn{q > 0}. \cr \cr
 #' For \eqn{q \le 1}, uses thresholding function given in Marjanovic and Solo (2014).
 #' For \eqn{q > 1}, computed bisection.
 #'
@@ -157,6 +157,9 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   Q <- crossprod(X)
 
   diagxtx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
+  if (diagxtx) {
+    max.iter <- 1 # A single cycle is necessary when design matrix has independent columns
+  }
   fullx <- min(eigen(Q)$values) > 0
   if (!diagxtx & rand.restart == 0 & q <= 1) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
