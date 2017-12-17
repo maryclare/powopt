@@ -122,6 +122,7 @@ powThresh <- function(z,
 #' @param \code{tol} scalar tolerance value for assessing convergence of objective function
 #' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent, defult is zero
 #' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}
+#' @param \code{start} starting value, set to null by default
 #'
 #' @return Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
 #'
@@ -135,7 +136,8 @@ powThresh <- function(z,
 #'
 #' @export
 powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
-                  print.iter = FALSE, tol = 10^(-7), ridge.eps = 0, rand.restart = 0) {
+                  print.iter = FALSE, tol = 10^(-7), ridge.eps = 0, rand.restart = 0,
+                  start = NULL) {
 
 
   if (q <= 0) {
@@ -179,7 +181,11 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   obj <- matrix(NA, nrow = max.iter, ncol = iter)
   for (m in 1:iter) {
     if (m == 1) {
-      bb <- crossprod(solve(Q + ridge.eps*diag(p)), l)
+      if (is.null(start)) {
+        bb <- crossprod(solve(Q + ridge.eps*diag(p)), l)
+      } else {
+        bb <- start
+      }
     } else {
       bb <- rnorm(p)
     }

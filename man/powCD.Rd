@@ -37,6 +37,8 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 \item{\code{ridge.eps}}{ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent, defult is zero}
 
 \item{\code{rand.restart}}{number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}}
+
+\item{\code{start}}{starting value, set to null by default}
 }
 \value{
 Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
