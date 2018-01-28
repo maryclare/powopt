@@ -90,7 +90,7 @@ NumericVector powThresh(NumericVector z, double lambda, double q) {
       l = 0.0;
       u = fabs(z[j]);
 
-      while (u - l > pow(10.0, -7.0)) {
+      while (u - l > pow(10.0, -14.0)) {
         m = (l + (u - l)/2.0) + lambda*q*pow(l + (u - l)/2.0, q - 1.0);
         if (m > abs(z[j])) {
           u = l + (u - l)/2.0;
@@ -109,3 +109,39 @@ NumericVector powThresh(NumericVector z, double lambda, double q) {
   return js;
 }
 
+//' Penalized likelihood objective function
+//' @name powObj
+//'
+//' @description Letting \eqn{Q =X'X} and \eqn{l = X'y}, gives the value: \cr
+//' \deqn{-((\beta'Q\beta - 2\beta'l)/(2\sigma^2) + \lambda \sum_{j = 1}^p |\beta_j|^q)} \cr
+//' for fixed \eqn{z}, \eqn{\lambda > 0} and \eqn{q > 0}.
+//'
+//' @usage \code{powObj(beta, Q, l, sigmasq = 1, lambda = 1, q = 1)}
+//'
+//' @param \code{beta} length p vector of coefficient values to compute objective function for
+//' @param \code{Q} p\eqn{\times}p matrix corresponding to \eqn{X'X}
+//' @param \code{l} length p vector corresponding to \eqn{X'y}
+//' @param \code{sigmasq} scalar noise variance
+//' @param \code{lambda} scalar multiplier applied to penalty
+//' @param \code{q} scalar power of penalty function
+//'
+// [[Rcpp::export]]
+double powObj(NumericVector beta, NumericMatrix Q, NumericVector l,
+              double sigmasq, double lambda, double q) {
+
+  int p = beta.size();
+
+  // Convert to ARMA objects, trying to minimize memory reallocation:
+  // According to: http://dirk.eddelbuettel.com/papers/rcpp_ku_nov2013-part2.pdf
+  arma::colvec betaAR(beta.begin(), beta.size(), false);
+  arma::colvec lAR(l.begin(), l.size(), false);
+  arma::mat QAR(Q.begin(), Q.nrow(), Q.ncol(), false);
+
+  double loglik = as_scalar(-(1.0/(2.0*sigmasq))*(betaAR.t()*QAR*betaAR - 2.0*betaAR.t()*lAR));
+
+  for (int j = 0; j < p; j++) {
+    loglik += -lambda*pow(fabs(as_scalar(betaAR.row(j))), q);
+  }
+
+  return -1.0*loglik;
+}

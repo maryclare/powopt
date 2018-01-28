@@ -24,3 +24,23 @@ powThresh <- function(z, lambda, q) {
     .Call('_powopt_powThresh', PACKAGE = 'powopt', z, lambda, q)
 }
 
+#' Penalized likelihood objective function
+#' @name powObj
+#'
+#' @description Letting \eqn{Q =X'X} and \eqn{l = X'y}, gives the value: \cr
+#' \deqn{-((\beta'Q\beta - 2\beta'l)/(2\sigma^2) + \lambda \sum_{j = 1}^p |\beta_j|^q)} \cr
+#' for fixed \eqn{z}, \eqn{\lambda > 0} and \eqn{q > 0}.
+#'
+#' @usage \code{powObj(beta, Q, l, sigmasq = 1, lambda = 1, q = 1)}
+#'
+#' @param \code{beta} length p vector of coefficient values to compute objective function for
+#' @param \code{Q} p\eqn{\times}p matrix corresponding to \eqn{X'X}
+#' @param \code{l} length p vector corresponding to \eqn{X'y}
+#' @param \code{sigmasq} scalar noise variance
+#' @param \code{lambda} scalar multiplier applied to penalty
+#' @param \code{q} scalar power of penalty function
+#'
+powObj <- function(beta, Q, l, sigmasq, lambda, q) {
+    .Call('_powopt_powObj', PACKAGE = 'powopt', beta, Q, l, sigmasq, lambda, q)
+}
+

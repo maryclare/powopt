@@ -1,14 +1,3 @@
-#' Penalized likelihood function, used to differentiate between local modes
-#'
-#' @export
-powObj <- function(beta, X, y, sigma.sq, lambda, q, Q = NULL, l = NULL) {
-
-  if (is.null(Q)) {Q <- crossprod(X)}
-  if (is.null(l)) {l <- crossprod(X, y)}
-  log.lik <- -(1/(2*sigma.sq))*(crossprod(t(crossprod(beta, Q)), beta) - 2*crossprod(beta, l)) - lambda*sum(abs(beta)^q)
-
-  return(-1*log.lik)
-}
 #' Coordinate descent for penalized regression with power penalty
 #'
 #' @name powCD
@@ -134,7 +123,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         opt.cond <- TRUE
       } else {
 
-        obj[k, m] <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
+        obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
         if (k > 1) {
           obj.diff <- obj[k, m] - obj[k - 1, m]
           if (print.iter) {
@@ -176,7 +165,6 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       bb <- rep(Inf, p)
       obj.bb <- Inf
     } else if (iter > 1) {
-      # obj.bb <- powObj(beta = bb, X = X, y = y, sigma.sq = 1, lambda = lambda, q = q, Q = Q, l = l)
       obj.bb <- obj[k - 1, m]
         if (obj.bb <= obj.tmp) {
           bb.tmp <- bb
