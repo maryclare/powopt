@@ -65,17 +65,25 @@ The optimal $\gamma$ solves:
 $$
 \gamma + \lambda q \gamma^{q - 1} = \left|z\right|.
 $$
-$\gamma + \lambda q \gamma^{q - 1}$ is monotonically increasing for $\gamma > 0$. Accordingly, we can find the optimal value of $\gamma$ by bisection. 
+$\gamma + \lambda q \gamma^{q - 1}$ is monotonically increasing for $\gamma > 0$. Accordingly, we can find the optimal value of $\gamma$ by bisection. There are undoubtably faster/better ways to compute this but we found this to be very stable compared to alternatives, e.g. Newton's method.
 Because $\gamma + \lambda q \gamma^{q - 1} \geq 0$ and $\gamma + \lambda q \gamma^{q - 1} \geq \gamma$ for all $\gamma \geq 0$, we can be sure that the optimal value of $\gamma$ is in the interval $\left[0,\left|z\right|\right]$. Taking $l^{\left(0\right)} = 0$,  $u^{\left(0\right)} = \left|z\right|$ and $\gamma^{\left(0\right)} = l^{\left(0\right)} + \left(u^{\left(0\right)} - l^{\left(0\right)}\right)/2$ and setting $k = 0$, the bisection algorithm is as follows:
 
 * Set  $z^{\left(k\right)} = \gamma^{\left(k\right)} + \lambda q \left(\gamma^{\left(k\right)}\right)^{q - 1}$.
-* Compare $z^{\left(k\right)}$ to $\left|z\right|$. 
+* Compare $z^{\left(k\right)}$ to $\left|z\right|$.
     - If $z^{\left(k\right)} = \left|z\right|$, take $l^{\left(k + 1\right)} = u^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
     - If $z^{\left(k\right)} > \left|z\right|$, keep $l^{\left(k + 1\right)} = l^{\left(k\right)}$ and set $u^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
     - If $z^{\left(k\right)} < \left|z\right|$, keep $u^{\left(k + 1\right)} = u^{\left(k\right)}$ and set $l^{\left(k + 1\right)} = \gamma^{\left(k\right)}$.
-* Set $\gamma^{\left(k + 1\right)} = l^{\left(k + 1\right)} + \left(u^{\left(k + 1\right)} - l^{\left(k + 1\right)}\right)/2$. 
+* Set $\gamma^{\left(k + 1\right)} = l^{\left(k + 1\right)} + \left(u^{\left(k + 1\right)} - l^{\left(k + 1\right)}\right)/2$.
     - If $u^{\left(k + 1\right)} = l^{\left(k + 1\right)}$ set the optimal value of $\beta$ to $\text{sign}\left(z\right)\gamma^{\left(k + 1\right)}$.
     - If $u^{\left(k + 1\right)} \neq l^{\left(k + 1\right)}$, repeat these steps.
+
+
+<!-- using Newton's method. Note that $\gamma + \lambda q \gamma^{q - 1} \geq 0$ and $\gamma + \lambda q \gamma^{q - 1} \geq \gamma$ for all $\gamma \geq 0$, we can be sure that the optimal value of $\gamma$ is in the interval $\left[0,\left|z\right|\right]$. Accordingly, we initialize a value $\gamma^{\left(0\right)} = \left|z\right|/2$ and then iteratively update values $\gamma^{\left(i\right)}$ according to the following until convergence of $\left(\gamma^{\left(i\right)} - \gamma^{\left(i-1\right)}\right)^2: -->
+
+$$
+\gamma^{\left(i\right)} = \gamma^{\left(i - 1\right)} - \left(\frac{\gamma^{\left(i-1\right)} + \lambda q \left(\gamma^{\left(i-1\right)}\right)^{q - 1} - \left|z\right|}{1 + \lambda q \left(q - 1\right) \left(\gamma^{\left(i-1\right)}\right)^{q - 2}}\right).
+$$
+
 
 
 # Using `powCD`
