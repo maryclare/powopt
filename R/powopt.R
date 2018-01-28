@@ -56,7 +56,7 @@ powThresh <- function(z,
 
         beta.bar.0 <- Inf
         beta.bar.1 <- abs(z[j])
-        while(abs(beta.bar.0 - beta.bar.1) > 10^(-7)) {
+        while(abs(beta.bar.0 - beta.bar.1) > 10^(-14)) {
           beta.bar.0 <- beta.bar.1
           beta.bar.1 <- abs(z[j]) - lambda*q*beta.bar.0^(q - 1)
         }
@@ -68,22 +68,35 @@ powThresh <- function(z,
   } else {
     for (j in 1:length(js)) {
 
-      # Compute by bisection
-      l <- 0
-      u <- abs(z[j])
+      # Compute by Newton's method
+      z.old <- 0
+      z.new <- abs(z[j])/2
 
-      while (u - l > 10^(-7)) {
-        m <- (l + (u - l)/2) + lambda*q*(l + (u - l)/2)^(q - 1)
-        if (m > abs(z[j])) {
-          u <- l + (u - l)/2
-        } else if (abs(m - abs(z[j])) < 10^(-14)) {
-           u <- l <- (l + (u - l)/2)
-        } else {
-          l <- l + (u - l)/2
-        }
+      while ((z.old - z.new)^2 > 10^(-14)) {
+        z.old <- z.new
+        fn <- z.old + lambda*q*z.old^(q - 1) - abs(z[j])
+        fn.d <- 1 + (q - 1)*lambda*q*z.old^(q - 2)
+        z.new <- z.old - fn/fn.d
       }
 
-      js[j] <- sign(z[j])*(u + l)/2
+      js[j] <- z.new
+
+      # Compute by bisection
+      # l <- 0
+      # u <- abs(z[j])
+      #
+      # while (u - l > 10^(-7)) {
+      #   m <- (l + (u - l)/2) + lambda*q*(l + (u - l)/2)^(q - 1)
+      #   if (m > abs(z[j])) {
+      #     u <- l + (u - l)/2
+      #   } else if (abs(m - abs(z[j])) < 10^(-14)) {
+      #      u <- l <- (l + (u - l)/2)
+      #   } else {
+      #     l <- l + (u - l)/2
+      #   }
+      # }
+      #
+      # js[j] <- sign(z[j])*(u + l)/2
     }
   }
   return(js)
