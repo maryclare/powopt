@@ -62,12 +62,12 @@ NumericVector powThresh(NumericVector z, double lambda, double q) {
   double u = 0.0;
   double m = 0.0;
 
-  if (q < 1) {
+  if (q <= 1) {
     for (int j = 0; j < p; j++) {
 
       if (fabs(z[j]) < hLambda) {
         js[j] = 0.0;
-      } else if (fabs(z[j]) <= pow(10.0, -14.0)) {
+      } else if (z[j] == 0.0) {
         js[j] = std::max(0.0, betaLambda);
       } else {
 
