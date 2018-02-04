@@ -33,6 +33,7 @@
 #' @param \code{ridge.eps} ridge regression tuning parameter for obtaining starting value of \eqn{\beta} in coordinate descent, defult is zero
 #' @param \code{rand.restart} number of times coordinate descent should be repeated from random starting value for \eqn{\beta} after an initial application of coordinate descent starting from ridge solution, needed when \eqn{X} is not orthogonal because the coordinate descent algorithm is not guaranteed to converge to the global optimum for all non-orthogonal \eqn{X} when \eqn{q \le 1}
 #' @param \code{start} starting value, set to null by default
+#' @param \code{return.obj.iter} TRUE/FALSE value indicating whether or not objectives at convergence and # of coordinate descent iterations should be returned
 #'
 #' @return Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
 #'
@@ -47,7 +48,7 @@
 #' @export
 powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
                   print.iter = FALSE, tol = 10^(-7), ridge.eps = 0, rand.restart = 0,
-                  start = NULL) {
+                  start = NULL, return.obj.iter = FALSE) {
 
 
   if (q <= 0) {
@@ -68,15 +69,11 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   l <- crossprod(X, y)
   Q <- crossprod(X)
 
-  diagxtx <- sum(abs(Q[lower.tri(Q, diag = FALSE)]) <= 10^(-14)) == p*(p - 1)/2
-  if (diagxtx) {
-    max.iter <- 1 # A single cycle is necessary when design matrix has independent columns
-  }
   fullx <- min(eigen(Q)$values) > 0
-  if (!diagxtx & rand.restart == 0 & q <= 1) {
+  if (rand.restart == 0 & q <= 1) {
     cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
   }
-  if (diagxtx & fullx & (rand.restart > 0 | ridge.eps > 0)) {
+  if (fullx & (rand.restart > 0 | ridge.eps > 0)) {
     cat("The design matrix is full rank and orthogonal and coordinate descent starting from the OLS solution will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
     rand.restart <- 0
     ridge.eps <- 0
@@ -88,6 +85,10 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   obj.tmp <- Inf
 
   iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
+  if (return.obj.iter) {
+    objs <- numeric(iter)
+    iters <- numeric(iter)
+  }
   obj <- matrix(NA, nrow = max.iter, ncol = iter)
   for (m in 1:iter) {
     if (m == 1) {
@@ -119,11 +120,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         bb[i] <- b.kp.i
       }
 
-      if (diagxtx) {
-        opt.cond <- TRUE
-      } else {
-
-        obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
+      obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
         if (k > 1) {
           obj.diff <- obj[k, m] - obj[k - 1, m]
           if (print.iter) {
@@ -133,33 +130,19 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
             opt.cond <- TRUE
           }
         }
-      }
+
 
       k <- k + 1
 
-      # opt <- numeric(p)
-      #
-      # for (i in 1:p) {
-      #   X.ii <- Q[i, i]
-      #   z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
-      #   lambda.ii <- lambda/X.ii
-      #   if (q <= 1) {
-      #     beta.lambda.ii <- (2*lambda.ii*(1 - q))^(1/(2 - q))
-      #     h.lambda.ii <- beta.lambda.ii + lambda.ii*q*beta.lambda.ii^(q - 1)
-      #   }
-      #   if (bb[i] == 0) {
-      #     opt[i] <- abs(bb[i] - z.k.i) <= h.lambda.ii
-      #   } else {
-      #     if (q <= 1) {
-      #       opt[i] <- (abs(bb[i]) >= beta.lambda.ii)*((bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
-      #     } else {
-      #       opt[i] <- (abs(bb[i] - z.k.i + sign(bb[i])*lambda.ii*q*abs(bb[i])^(q - 1)) <=  tol)
-      #     }
-      #   }
-      # }
-      #
-      # opt.cond <- (sum(opt) == p)
-
+    }
+    if (return.obj.iter) {
+      if (k < max.iter) {
+        objs[m] <- obj[k, m]
+        iters[m] <- k
+      } else {
+        objs[m] <- NA
+        iters[m] <- NA
+      }
     }
     if (!opt.cond) {
       bb <- rep(Inf, p)
@@ -175,5 +158,9 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     }
   }
   if (is.infinite(bb.tmp[1])) {bb.tmp <- rep(NA, p)}
-  return(bb.tmp)
+  if (!return.obj.iter) {
+    return(bb.tmp)
+  } else {
+    return(list("opt.b" = bb.tmp, "iter" = iters, "obj" = objs))
+  }
 }
