@@ -137,8 +137,8 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
     }
     if (return.obj.iter) {
       if (k < max.iter) {
-        objs[m] <- obj[k, m]
-        iters[m] <- k
+        objs[m] <- obj[k-1, m]
+        iters[m] <- k-1
       } else {
         objs[m] <- NA
         iters[m] <- NA
