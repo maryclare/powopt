@@ -21,7 +21,7 @@
 #' Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475.
 #'
 powThresh <- function(z, lambda, q) {
-    .Call('_powopt_powThresh', PACKAGE = 'powopt', z, lambda, q)
+    .Call(`_powopt_powThresh`, z, lambda, q)
 }
 
 #' Penalized likelihood objective function
@@ -41,6 +41,6 @@ powThresh <- function(z, lambda, q) {
 #' @param \code{q} scalar power of penalty function
 #'
 powObj <- function(beta, Q, l, sigmasq, lambda, q) {
-    .Call('_powopt_powObj', PACKAGE = 'powopt', beta, Q, l, sigmasq, lambda, q)
+    .Call(`_powopt_powObj`, beta, Q, l, sigmasq, lambda, q)
 }
 
