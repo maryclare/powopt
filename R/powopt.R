@@ -70,13 +70,15 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   Q <- crossprod(X)
 
   fullx <- min(eigen(Q)$values) > 0
-  if (rand.restart == 0 & q <= 1) {
-    cat("The design matrix is not orthogonal. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
+  orthx <- max(abs(Q[lower.tri(Q)])) < 10^(-14)
+  if (!fullx & rand.restart == 0 & q == 1) {
+    cat("The design matrix is not full rank and q = 1. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
   }
-  if (fullx & (rand.restart > 0 | ridge.eps > 0)) {
-    cat("The design matrix is full rank and orthogonal and coordinate descent starting from the OLS solution will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart will be reset to zero.\n")
-    rand.restart <- 0
-    ridge.eps <- 0
+  if (rand.restart == 0 & q < 1) {
+    cat("The problem is nonconvex. It is possible that the coordinate descent algorithm will not converge to the global minimum regardless of the starting value. Setting rand.restart > 0 and examining the solution is strongly recommended.\n")
+  }
+  if (orthx & fullx & (rand.restart > 0 | ridge.eps > 0)) {
+    cat("The design matrix is full rank and orthogonal and coordinate descent starting from the OLS solution will always converge to the global minimum, so there is no need to repeat coordinate descent from random starting values. The value of rand.restart should be reset to zero.\n")
   }
 
   lambda <- sigma.sq*lambda
