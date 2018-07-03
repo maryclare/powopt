@@ -238,7 +238,7 @@ from.zero <- function(X, y, sig.sq, tau.sq, q,
   for (k in 1:iter) {
 
     if (k == 1) {
-      order <- 1:p
+      order <- order
     } else {
       order <- sample(1:p, p, replace = FALSE)
     }
