@@ -41,6 +41,8 @@ Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regress
 \item{\code{start}}{starting value, set to null by default}
 
 \item{\code{return.obj.iter}}{TRUE/FALSE value indicating whether or not objectives at convergence and # of coordinate descent iterations should be returned}
+
+\item{\code{order}}{Vector indicating order of variables in coordinate descent, defaults to 1:p}
 }
 \value{
 Returns a vector of optimal values for \eqn{\beta}. If the coordinate descent algorithm does not meet the optimality conditions given in Marjanovic and Solo (2014), a vector of \code{NA}'s is returned.
