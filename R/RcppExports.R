@@ -40,7 +40,7 @@ powThresh <- function(z, lambda, q) {
 #' @param \code{lambda} scalar multiplier applied to penalty
 #' @param \code{q} scalar power of penalty function
 #'
-powObj <- function(beta, Q, l, sigmasq, lambda, q) {
-    .Call(`_powopt_powObj`, beta, Q, l, sigmasq, lambda, q)
+powObj <- function(beta, Q, l, yty, sigmasq, lambda, q) {
+    .Call(`_powopt_powObj`, beta, Q, l, yty, sigmasq, lambda, q)
 }
 

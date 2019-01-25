@@ -126,7 +126,7 @@ NumericVector powThresh(NumericVector z, double lambda, double q) {
 //' @param \code{q} scalar power of penalty function
 //'
 // [[Rcpp::export]]
-double powObj(NumericVector beta, NumericMatrix Q, NumericVector l,
+double powObj(NumericVector beta, NumericMatrix Q, NumericVector l, double yty,
               double sigmasq, double lambda, double q) {
 
   int p = beta.size();
@@ -137,7 +137,7 @@ double powObj(NumericVector beta, NumericMatrix Q, NumericVector l,
   arma::colvec lAR(l.begin(), l.size(), false);
   arma::mat QAR(Q.begin(), Q.nrow(), Q.ncol(), false);
 
-  double loglik = as_scalar(-(1.0/(2.0*sigmasq))*(betaAR.t()*QAR*betaAR - 2.0*betaAR.t()*lAR));
+  double loglik = as_scalar(-(1.0/(2.0*sigmasq))*(betaAR.t()*QAR*betaAR - 2.0*betaAR.t()*lAR + yty));
 
   for (int j = 0; j < p; j++) {
     loglik += -lambda*pow(fabs(as_scalar(betaAR.row(j))), q);

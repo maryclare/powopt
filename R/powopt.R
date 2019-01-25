@@ -69,6 +69,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   p <- ncol(X)
   l <- crossprod(X, y)
   Q <- crossprod(X)
+  yty <- crossprod(y)
 
   fullx <- min(eigen(Q)$values) > 0
   orthx <- max(abs(Q[lower.tri(Q)])) < 10^(-14)
@@ -123,16 +124,16 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         bb[i] <- b.kp.i
       }
 
-      obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l)/n
-        if (k > 1) {
-          obj.diff <- obj[k, m] - obj[k - 1, m]
-          if (print.iter) {
-            cat("Objective=", round(obj[k, m], 7), "\n")
-          }
-          if (abs(obj.diff) < tol) {
-            opt.cond <- TRUE
-          }
+      obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l, yty = yty)/n
+      if (k > 1) {
+        obj.diff <- obj[k, m] - obj[k - 1, m]
+        if (print.iter) {
+          cat("Objective=", round(obj[k, m], 7), "\n")
         }
+        if (abs(obj.diff) < tol) {
+          opt.cond <- TRUE
+        }
+      }
 
 
       k <- k + 1
@@ -152,10 +153,10 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       obj.bb <- Inf
     } else if (iter > 1) {
       obj.bb <- obj[k - 1, m]
-        if (obj.bb <= obj.tmp) {
-          bb.tmp <- bb
-          obj.tmp <- obj.bb
-        }
+      if (obj.bb <= obj.tmp) {
+        bb.tmp <- bb
+        obj.tmp <- obj.bb
+      }
     } else if (iter == 1) {
       bb.tmp <- bb
     }
@@ -236,6 +237,7 @@ from.zero <- function(X, y, sig.sq, tau.sq, q,
   obj.tmp <- Inf
 
   for (k in 1:iter) {
+    if(print.iter) {cat("k = ", k, "\n")}
 
     if (k == 1) {
       order <- order
@@ -273,12 +275,134 @@ from.zero <- function(X, y, sig.sq, tau.sq, q,
     }
   }
 
+  if (estimate.only) {
+    res <- list("betas" = betas.return[num.seq, ])
+  } else {
+    res <- list("betas" = betas.return, "obj" = objs.return[num.seq], "iter" = sum(iters.return))
+  }
 
+  return(res)
+
+}
+
+from.two <- function(X, y, sig.sq, tau.sq, q,
+                     num.seq = 100,
+                     print.iter = FALSE,
+                     order = 1:p, estimate.only = TRUE, max.iter = 10000,
+                     tol = 10^(-7), rand.restart = 0) {
+
+  if (num.seq == 1) {
+    cat("Need to provide num.seq > 1\n")
+    break;
+  }
+
+  iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
+
+  q.seq <- exp(seq(log(2), log(q), length.out = num.seq))
+
+  obj.tmp <- Inf
+
+  for (k in 1:iter) {
+    if(print.iter) {cat("k = ", k, "\n")}
+
+    if (k == 1) {
+      order <- order
+    } else {
+      order <- sample(1:p, p, replace = FALSE)
+    }
+    betas <- matrix(nrow = num.seq, ncol = p)
+    objs <- numeric(num.seq)
+    iters <- numeric(num.seq)
+
+    for (i in 1:num.seq) {
+      if(print.iter) {cat("i = ", i, "\n")}
+      if (i > 1) {
+        start <- betas[i - 1, ]
+        CD <- powCD(X, y, sigma.sq = sig.sq, lambda = (gamma(3/q.seq[i])/gamma(1/q.seq[i]))^(q.seq[i]/2)/sqrt(tau.sq)^q.seq[i],
+                    q = q.seq[i], start = start,
+                    rand.restart = 0, return.obj.iter = TRUE, order = order, tol = tol, max.iter = max.iter)
+        betas[i, ] <- CD[["opt.b"]]
+        objs[i] <- CD[["obj"]]
+        iters[i] <- CD[["iter"]]
+      } else {
+        betas[i, ] <- crossprod(solve(crossprod(X)/sig.sq + diag(p)/tau.sq), crossprod(X, y)/sig.sq)
+        iters[i] <- 1
+      }
+    }
+
+
+    obj.bb <- objs[num.seq]
+    if (k > 1 & obj.bb < obj.tmp) {
+      betas.return <- betas
+      objs.return <- objs
+      iters.return <- iters
+      obj.tmp <- obj.bb
+    } else if (k == 1) {
+      betas.return <- betas
+      objs.return <- objs
+      iters.return <- iters
+      obj.tmp <- obj.bb
+    }
+  }
 
   if (estimate.only) {
     res <- list("betas" = betas.return[num.seq, ])
   } else {
     res <- list("betas" = betas.return, "obj" = objs.return[num.seq], "iter" = sum(iters.return))
+  }
+
+  return(res)
+
+}
+
+dir <- function(X, y, sig.sq, tau.sq, q,
+                             print.iter = FALSE,
+                             start = rep(0, p), estimate.only = TRUE, max.iter = 10000,
+                             tol = 10^(-7), rand.restart = 0) {
+
+  iter <- ifelse(rand.restart == 0, 1, rand.restart + 1)
+
+  p <- ncol(X)
+
+  obj.tmp <- Inf
+
+  for (k in 1:iter) {
+    if(print.iter) {cat("k = ", k, "\n")}
+
+    if (k == 1) {
+      start <- start
+    } else {
+      start <- rnorm(p)
+    }
+    betas <- numeric(p)
+    objs <- numeric(1)
+    iters <- numeric(1)
+
+    CD <- powCD(X, y, sigma.sq = sig.sq, lambda = (gamma(3/q)/gamma(1/q))^(1/2)/sqrt(tau.sq)^q,
+                  q = q, start = start,
+                  rand.restart = 0, return.obj.iter = TRUE, max.iter = max.iter, tol = tol)
+    betas <- CD[["opt.b"]]
+    objs <- CD[["obj"]]
+    iters <- CD[["iter"]]
+
+    obj.bb <- objs
+    if (k > 1 & obj.bb < obj.tmp) {
+      betas.return <- betas
+      objs.return <- objs
+      iters.return <- iters
+      obj.tmp <- obj.bb
+    } else if (k == 1) {
+      betas.return <- betas
+      objs.return <- objs
+      iters.return <- iters
+      obj.tmp <- obj.bb
+    }
+  }
+
+  if (estimate.only) {
+    res <- list("betas" = betas.return)
+  } else {
+    res <- list("betas" = betas.return, "obj" = objs.return, "iter" = sum(iters.return))
   }
 
   return(res)
