@@ -284,6 +284,8 @@ from.two <- function(X, y, sig.sq, tau.sq, q,
     break;
   }
 
+  p <- ncol(X)
+
   q.seq <- exp(seq(log(2), log(q), length.out = num.seq))
 
 
