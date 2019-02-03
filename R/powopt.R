@@ -340,7 +340,7 @@ reg.surface <- function(X, y, sig.sq, tau.sq, q,
                         print.iter = FALSE,
                         order = 1:p, estimate.only = TRUE, max.iter = 10000,
                         tol = 10^(-7), rand.restart = 0, warm.start.q = TRUE,
-                        warm.start.tau.sq = TRUE, print.iter=FALSE) {
+                        warm.start.tau.sq = TRUE) {
 
   if (num.seq.q == 1 | num.seq.tau.sq == 1) {
     cat("Need to provide num.seq.q > 1 and num.seq.tau.sq > 1\n")
