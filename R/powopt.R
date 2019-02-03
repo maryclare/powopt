@@ -304,7 +304,8 @@ from.two <- function(X, y, sig.sq, tau.sq, q,
       ti <- system.time(
       CD <- powCD(X, y, sigma.sq = sig.sq, lambda = (gamma(3/q.seq[i])/gamma(1/q.seq[i]))^(q.seq[i]/2)/sqrt(tau.sq)^q.seq[i],
                   q = q.seq[i], start = start,
-                  rand.restart = 0, return.obj.iter = TRUE, order = order, tol = tol, max.iter = max.iter))
+                  rand.restart = 0, return.obj.iter = TRUE, order = order, tol = tol, max.iter = max.iter)
+      )
       betas[i, ] <- CD[["opt.b"]]
       objs[i] <- CD[["obj"]]
       iters[i] <- CD[["iter"]]
@@ -339,7 +340,7 @@ reg.surface <- function(X, y, sig.sq, tau.sq, q,
                         print.iter = FALSE,
                         order = 1:p, estimate.only = TRUE, max.iter = 10000,
                         tol = 10^(-7), rand.restart = 0, warm.start.q = TRUE,
-                        warm.start.tau.sq = TRUE) {
+                        warm.start.tau.sq = TRUE, print.iter=FALSE) {
 
   if (num.seq.q == 1 | num.seq.tau.sq == 1) {
     cat("Need to provide num.seq.q > 1 and num.seq.tau.sq > 1\n")
@@ -363,11 +364,12 @@ reg.surface <- function(X, y, sig.sq, tau.sq, q,
   times <- iters <- array(dim = c(num.seq.q, num.seq.tau.sq))
   if (warm.start.q | !(warm.start.q & warm.start.tau.sq)) {
     for (i in 1:num.seq.tau.sq) {
+      if(print.iter) {cat("i=", i, "\n")}
       ft <- from.two(y = y, X = X, tau.sq = tau.sq.seq[i],
                      sig.sq = sig.sq, q = q,
                      num.seq = num.seq.q, print.iter = FALSE,
                      estimate.only = FALSE, warm.start = warm.start.q,
-                     tol = 10^(-14))
+                     tol = tol)
       betas[, i, ] <- ft$betas
       objs[, i] <- ft$objs
       iters[, i] <- ft$iters
@@ -376,11 +378,12 @@ reg.surface <- function(X, y, sig.sq, tau.sq, q,
     }
   } else if (warm.start.tau.sq) {
     for (i in 1:num.seq.q) {
+      if(print.iter) {cat("i=", i, "\n")}
       ft <- from.zero(y = y, X = X, tau.sq = tau.sq,
                       sig.sq = sig.sq, q = q.seq[i],
                       num.seq = num.seq.q, print.iter = FALSE,
                       estimate.only = FALSE, warm.start = warm.start.tau.sq,
-                      tol = 10^(-14))
+                      tol = tol)
       betas[i, , ] <- ft$betas
       objs[i, ] <- ft$objs
       iters[i, ] <- ft$iters
