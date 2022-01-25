@@ -172,7 +172,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 
 #' Pathwise coordinate descent for penalized regression with power penalty
 #'
-#' @name from.zero
+#' @name from.zero.omega
 #'
 #' @description Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
 #' \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
@@ -192,8 +192,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 #'
 #' @param \code{X} design matrix
 #' @param \code{y} response vector
-#' @param \code{sigma.sq} scalar value \eqn{\sigma^2}
-#' @param \code{tau.sq} scalar value \eqn{\tau^2}
+#' @param \code{omega} scalar value \eqn{\omega^2}
 #' @param \code{q} scalar value \eqn{q}
 #' @param \code{max.iter} maximum number of iterations for coordinate descent
 #' @param \code{print.iter} logical value indicating whether iteration count for coordinate descent should be printed
@@ -212,11 +211,13 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 #' Marjanovic, Goran, and Victor Solo. "\eqn{l_q} Sparsity Penalized Linear Regression With Cyclic Descent." IEEE Transactions on Signal Processing 62.6 (2014): 1464-1475. \cr
 #'
 #' @export
-from.zero <- function(X, y, sig.sq, tau.sq, q,
-                      num.seq = 100,
-                      print.iter = FALSE,
-                      order = 1:p, estimate.only = TRUE, max.iter = 10000,
-                      tol = 10^(-7), warm.start = TRUE) {
+from.zero.omega <- function(X, y, q,
+                            omega.seq = NULL,
+                            print.iter = FALSE,
+                            order = 1:p, estimate.only = TRUE, max.iter = 10000,
+                            tol = 10^(-7), warm.start = TRUE) {
+
+  num.seq <- length(omega.seq)
 
   if (num.seq == 1) {
     cat("Need to provide num.seq > 1\n")
@@ -224,14 +225,8 @@ from.zero <- function(X, y, sig.sq, tau.sq, q,
   }
 
   p <- ncol(X)
-  b <- numeric(p)
-  for (i in 1:length(b)) {
-    b[i] <- crossprod(X[, i], y)
-  }
-
-  tau.sq.min <- (sqrt(gamma(3))/max(abs(b)/sig.sq))^2
-
-  tau.sq.seq <- exp(seq(log(tau.sq.min), log(tau.sq), length.out = num.seq))
+  dXtX <- diag(crossprod(X))
+  Xty <- crossprod(X, y)
 
   betas <- matrix(nrow = num.seq, ncol = p)
   objs <- numeric(num.seq)
@@ -248,36 +243,42 @@ from.zero <- function(X, y, sig.sq, tau.sq, q,
       start <- rnorm(p)
     }
     ti <- system.time(
-    CD <- powCD(X, y, sigma.sq = sig.sq, lambda = (gamma(3/q)/gamma(1/q))^(1/2)/sqrt(tau.sq.seq[i])^q,
-                q = q, start = start,
-                rand.restart = 0, return.obj.iter = TRUE, order = order, max.iter = max.iter, tol = tol)
+      CD <- powCD(X, y, sigma.sq = 1, lambda = omega.seq[i]^(2 - q)/q,
+                  q = q, start = start,
+                  rand.restart = 0, return.obj.iter = TRUE, order = order,
+                  max.iter = max.iter, tol = tol)
     )
     betas[i, ] <- CD[["opt.b"]]
     objs[i] <- CD[["obj"]]
     iters[i] <- CD[["iter"]]
     times[i] <- ti[3]
+
   }
   obj.bb <- objs[num.seq]
   betas.return <- betas
   objs.return <- objs
   iters.return <- iters
+  times.return <- times
 
   if (estimate.only) {
     res <- list("betas" = betas.return[num.seq, ])
   } else {
     res <- list("betas" = betas.return, "objs" = objs.return, "iters" = iters.return,
-                "tau.sqs" = tau.sq.seq, "times" = times.return)
+                "omegas" = omega.seq, "times" = times.return, "q" = q)
   }
 
   return(res)
 
 }
 
-from.two <- function(X, y, sig.sq, tau.sq, q,
-                     num.seq = 100,
-                     print.iter = FALSE,
-                     order = 1:p, estimate.only = TRUE, max.iter = 10000,
-                     tol = 10^(-7), warm.start = TRUE) {
+#' @export
+from.zero.q <- function(X, y, omega,
+                        q.seq = NULL,
+                        print.iter = FALSE,
+                        order = 1:p, estimate.only = TRUE, max.iter = 10000,
+                        tol = 10^(-7), warm.start = TRUE) {
+
+  num.seq <- length(q.seq)
 
   if (num.seq == 1) {
     cat("Need to provide num.seq > 1\n")
@@ -285,9 +286,71 @@ from.two <- function(X, y, sig.sq, tau.sq, q,
   }
 
   p <- ncol(X)
+  dXtX <- diag(crossprod(X))
+  if (max(abs(dXtX - 1)) > 10^(-14)) {
+    cat("This is only implemented for design matrices with unit norm colums\n")
+    break;
+  }
+  Xty <- crossprod(X, y)
 
-  q.seq <- exp(seq(log(2), log(q), length.out = num.seq))
+  betas <- matrix(nrow = num.seq, ncol = p)
+  objs <- numeric(num.seq)
+  times <- iters <- numeric(num.seq)
 
+  for (i in 1:num.seq) {
+    if(print.iter) {cat("i = ", i, "\n")}
+    if (warm.start) {
+      start <- rep(0, p)
+      if (i > 1) {
+        start <- betas[i - 1, ]
+      }
+    } else {
+      start <- rnorm(p)
+    }
+    ti <- system.time(
+      CD <- powCD(X, y, sigma.sq = 1, lambda = omega^(2 - q.seq[i])/q.seq[i],
+                  q = q.seq[i], start = start,
+                  rand.restart = 0, return.obj.iter = TRUE, order = order,
+                  max.iter = max.iter, tol = tol)
+    )
+    betas[i, ] <- CD[["opt.b"]]
+    objs[i] <- CD[["obj"]]
+    iters[i] <- CD[["iter"]]
+    times[i] <- ti[3]
+
+  }
+  obj.bb <- objs[num.seq]
+  betas.return <- betas
+  objs.return <- objs
+  iters.return <- iters
+  times.return <- times
+
+  if (estimate.only) {
+    res <- list("betas" = betas.return[num.seq, ])
+  } else {
+    res <- list("betas" = betas.return, "objs" = objs.return, "iters" = iters.return,
+                "qs" = q.seq, "times" = times.return, "omega" = omega)
+  }
+
+  return(res)
+
+}
+
+#' @export
+from.two <- function(X, y, omega, q.seq,
+                     print.iter = FALSE,
+                     order = 1:p, estimate.only = TRUE, max.iter = 10000,
+                     tol = 10^(-7), warm.start = TRUE) {
+
+
+  num.seq <- length(q.seq)
+
+  if (num.seq == 1) {
+    cat("Need to provide num.seq > 1\n")
+    break;
+  }
+
+  p <- ncol(X)
 
   betas <- matrix(nrow = num.seq, ncol = p)
   objs <- numeric(num.seq)
@@ -301,17 +364,20 @@ from.two <- function(X, y, sig.sq, tau.sq, q,
       } else {
         start <- rnorm(p)
       }
+
       ti <- system.time(
-      CD <- powCD(X, y, sigma.sq = sig.sq, lambda = (gamma(3/q.seq[i])/gamma(1/q.seq[i]))^(q.seq[i]/2)/sqrt(tau.sq)^q.seq[i],
-                  q = q.seq[i], start = start,
-                  rand.restart = 0, return.obj.iter = TRUE, order = order, tol = tol, max.iter = max.iter)
+        CD <- powCD(X, y, sigma.sq = 1, lambda = omega^(2 - q.seq[i])/q.seq[i],
+                    q = q.seq[i], start = start,
+                    rand.restart = 0, return.obj.iter = TRUE, order = order, tol = tol,
+                    max.iter = max.iter)
       )
       betas[i, ] <- CD[["opt.b"]]
       objs[i] <- CD[["obj"]]
       iters[i] <- CD[["iter"]]
       times[i] <- ti[3]
-    } else {
-      betas[i, ] <- crossprod(solve(crossprod(X)/sig.sq + diag(p)/tau.sq), crossprod(X, y)/sig.sq)
+
+    } else { # Need to check this
+      betas[i, ] <- crossprod(solve(crossprod(X) + diag(p)), crossprod(X, y))
       iters[i] <- 1
     }
   }
@@ -327,84 +393,55 @@ from.two <- function(X, y, sig.sq, tau.sq, q,
     res <- list("betas" = betas.return[num.seq, ])
   } else {
     res <- list("betas" = betas.return, "objs" = objs.return, "iters" = iters.return,
-                "qs" = q.seq, "times" = times.return)
+                "qs" = q.seq, "times" = times.return, "omega" = omega)
   }
 
   return(res)
 
 }
 
-reg.surface <- function(X, y, sig.sq, tau.sq, q,
-                        num.seq.q = 100,
-                        num.seq.tau.sq = 100,
-                        print.iter = FALSE,
-                        order = 1:p, estimate.only = TRUE, max.iter = 10000,
-                        tol = 10^(-7), rand.restart = 0, warm.start.q = TRUE,
-                        warm.start.tau.sq = TRUE) {
+#' @export
+get.omega.min <- function(q, dXtX, Xty) {
+  (max(abs(Xty)*dXtX^((q - 1)/(2 - q)))/(2-q))*(2*(1 - q))^((1 - q)/(2 - q))*q^(1/(2 - q))
+}
 
-  if (num.seq.q == 1 | num.seq.tau.sq == 1) {
-    cat("Need to provide num.seq.q > 1 and num.seq.tau.sq > 1\n")
-    break;
-  }
+#' @export
+qfun <- function(q) {
+  (2-q)*(2*(1 - q))^((1 - q)/(q - 2))*q^(1/(q - 2))
+}
 
-  q.seq <- exp(seq(log(2), log(q), length.out = num.seq.q))
+#' @export
+get.q.max <- function(omega, Xty, eps = 10^(-7)) {
+  cut <- max(abs(Xty))/omega
+  low <- 10^(-16)
+  hig <- 1
+  qlow <- qfun(low)
+  qhig <- qfun(hig)
 
-  p <- ncol(X)
-  b <- numeric(p)
-  for (i in 1:length(b)) {
-    b[i] <- crossprod(X[, i], y)
-  }
-
-  tau.sq.min <- (sqrt(gamma(3))/max(abs(b)/sig.sq))^2
-
-  tau.sq.seq <- exp(seq(log(tau.sq.min), log(tau.sq), length.out = num.seq.tau.sq))
-
-  betas <- array(dim = c(num.seq.q, num.seq.tau.sq, p))
-  objs <- array(Inf, dim = c(num.seq.q, num.seq.tau.sq))
-  times <- iters <- array(dim = c(num.seq.q, num.seq.tau.sq))
-  if (warm.start.q | !(warm.start.q & warm.start.tau.sq)) {
-    for (i in 1:num.seq.tau.sq) {
-      if(print.iter) {cat("i=", i, "\n")}
-      ft <- from.two(y = y, X = X, tau.sq = tau.sq.seq[i],
-                     sig.sq = sig.sq, q = q,
-                     num.seq = num.seq.q, print.iter = FALSE,
-                     estimate.only = FALSE, warm.start = warm.start.q,
-                     tol = tol)
-      betas[, i, ] <- ft$betas
-      objs[, i] <- ft$objs
-      iters[, i] <- ft$iters
-      times[, i] <- ft$times
-
-    }
-  } else if (warm.start.tau.sq) {
-    for (i in 1:num.seq.q) {
-      if(print.iter) {cat("i=", i, "\n")}
-      ft <- from.zero(y = y, X = X, tau.sq = tau.sq,
-                      sig.sq = sig.sq, q = q.seq[i],
-                      num.seq = num.seq.q, print.iter = FALSE,
-                      estimate.only = FALSE, warm.start = warm.start.tau.sq,
-                      tol = tol)
-      betas[i, , ] <- ft$betas
-      objs[i, ] <- ft$objs
-      iters[i, ] <- ft$iters
-      times[i, ] <- ft$times
-    }
-  }
-
-  obj.bb <- objs[num.seq.q, num.seq.tau.sq]
-  betas.return <- betas
-  objs.return <- objs
-  iters.return <- iters
-  times.return <- times
-
-  if (estimate.only) {
-    res <- list("betas" = betas.return[num.seq.q, num.seq.tau.sq, ])
+  if (qlow < cut) {
+    q <- qlow
+  } else if (qhig > cut) {
+    q <- qhig
   } else {
-    res <- list("betas" = betas.return, "objs" = objs.return, "iters" = iters.return,
-                "qs" = q.seq, "tau.sqs" = tau.sq.seq, "times" = times.return)
+    while (qlow - qhig > eps) {
+      mid <- (low + hig)/2
+      qmid <- qfun(mid)
+      # qs <- seq(low, hig, length.out = 10000)
+      # plot(qs, qfun(qs), type = "l")
+      # abline(v = c(low, mid, hig), lty = 3, col = c("red", "black", "blue"))
+      # abline(h = c(cut, qmid), lty = 3, col = c("black", "gray"))
+      if (qmid < cut) {
+        hig <- mid
+      } else {
+        low <- mid
+      }
+      qlow <- qfun(low)
+      qhig <- qfun(hig)
+
+    }
+    q <- (low + hig)/2
   }
 
-  return(res)
+  return(q)
 
 }
-

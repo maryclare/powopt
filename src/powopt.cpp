@@ -9,6 +9,7 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
+using namespace std;
 
 // Scraped from here to get a way to set seed:
 // http://thecoatlessprofessor.com/programming/set_rs_seed_in_rcpp_sequential_case/
