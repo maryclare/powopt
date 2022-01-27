@@ -105,6 +105,7 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       bb <- rnorm(p)
     }
 
+    start.obj <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l, yty = yty)/n
     rr <- y - crossprod(t(X), bb)
     k <- 1
     opt.cond <- FALSE
@@ -127,13 +128,16 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
       obj[k, m] <- powObj(beta = bb, sigmasq = 1, lambda = lambda, q = q, Q = Q, l = l, yty = yty)/n
       if (k > 1) {
         obj.diff <- obj[k, m] - obj[k - 1, m]
-        if (print.iter) {
-          cat("Objective=", round(obj[k, m], 7), "\n")
-        }
-        if (abs(obj.diff) < tol) {
-          opt.cond <- TRUE
-        }
+      } else {
+        obj.diff <- obj[k, m] - start.obj
       }
+      if (print.iter) {
+        cat("Objective=", round(obj[k, m], 7), "\n")
+      }
+      if (abs(obj.diff) < tol) {
+        opt.cond <- TRUE
+      }
+
 
 
       k <- k + 1
@@ -240,7 +244,7 @@ from.zero.omega <- function(X, y, q,
         start <- betas[i - 1, ]
       }
     } else {
-      start <- rnorm(p)
+      start <- rep(0, p)
     }
     ti <- system.time(
       CD <- powCD(X, y, sigma.sq = 1, lambda = omega.seq[i]^(2 - q)/q,
@@ -305,7 +309,7 @@ from.zero.q <- function(X, y, omega,
         start <- betas[i - 1, ]
       }
     } else {
-      start <- rnorm(p)
+      start <- rep(0, p)
     }
     ti <- system.time(
       CD <- powCD(X, y, sigma.sq = 1, lambda = omega^(2 - q.seq[i])/q.seq[i],
@@ -358,11 +362,11 @@ from.two <- function(X, y, omega, q.seq,
 
   for (i in 1:num.seq) {
     if(print.iter) {cat("i = ", i, "\n")}
-    if ((i > 1 & warm.start) | (!warm.start)) {
+    if (i > 1) {
       if (warm.start) {
         start <- betas[i - 1, ]
       } else {
-        start <- rnorm(p)
+        start <- betas[1, ]
       }
 
       ti <- system.time(
