@@ -144,17 +144,12 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
 
     }
     if (return.obj.iter) {
-      if (k < max.iter) {
-        objs[m] <- obj[k-1, m]
-        iters[m] <- k-1
-      } else {
-        objs[m] <- NA
-        iters[m] <- NA
-      }
+      objs[m] <- obj[k-1, m]
+      iters[m] <- k-1
+
     }
-    if (!opt.cond) {
+    if (!opt.cond & !return.obj.iter) {
       bb <- rep(Inf, p)
-      obj.bb <- Inf
     } else if (iter > 1) {
       obj.bb <- obj[k - 1, m]
       if (obj.bb <= obj.tmp) {
@@ -170,7 +165,8 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
   if (!return.obj.iter) {
     return(bb.tmp)
   } else {
-    return(list("opt.b" = bb.tmp, "iter" = iters, "obj" = objs))
+    return(list("opt.b" = bb.tmp, "iter" = iters, "obj" = objs,
+                "opt.cond" = opt.cond))
   }
 }
 
