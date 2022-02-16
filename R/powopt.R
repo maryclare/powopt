@@ -272,71 +272,6 @@ from.zero.omega <- function(X, y, q,
 }
 
 #' @export
-from.zero.q <- function(X, y, omega,
-                        q.seq = NULL,
-                        print.iter = FALSE,
-                        order = 1:p, estimate.only = TRUE, max.iter = 10000,
-                        tol = 10^(-7), warm.start = TRUE) {
-
-  num.seq <- length(q.seq)
-
-  if (num.seq == 1) {
-    cat("Need to provide num.seq > 1\n")
-    break;
-  }
-
-  p <- ncol(X)
-  dXtX <- diag(crossprod(X))
-  if (max(abs(dXtX - 1)) > 10^(-14)) {
-    cat("This is only implemented for design matrices with unit norm colums\n")
-    break;
-  }
-  Xty <- crossprod(X, y)
-
-  betas <- matrix(nrow = num.seq, ncol = p)
-  objs <- numeric(num.seq)
-  times <- iters <- numeric(num.seq)
-
-  for (i in 1:num.seq) {
-    if(print.iter) {cat("i = ", i, "\n")}
-    if (warm.start) {
-      start <- rep(0, p)
-      if (i > 1) {
-        start <- betas[i - 1, ]
-      }
-    } else {
-      start <- rep(0, p)
-    }
-    ti <- system.time(
-      CD <- powCD(X, y, sigma.sq = 1, lambda = omega^(2 - q.seq[i])/q.seq[i],
-                  q = q.seq[i], start = start,
-                  rand.restart = 0, return.obj.iter = TRUE, order = order,
-                  max.iter = max.iter, tol = tol)
-    )
-    betas[i, ] <- CD[["opt.b"]]
-    objs[i] <- CD[["obj"]]
-    iters[i] <- CD[["iter"]]
-    times[i] <- ti[3]
-
-  }
-  obj.bb <- objs[num.seq]
-  betas.return <- betas
-  objs.return <- objs
-  iters.return <- iters
-  times.return <- times
-
-  if (estimate.only) {
-    res <- list("betas" = betas.return[num.seq, ])
-  } else {
-    res <- list("betas" = betas.return, "objs" = objs.return, "iters" = iters.return,
-                "qs" = q.seq, "times" = times.return, "omega" = omega)
-  }
-
-  return(res)
-
-}
-
-#' @export
 from.two <- function(X, y, omega, q.seq,
                      print.iter = FALSE,
                      order = 1:p, estimate.only = TRUE, max.iter = 10000,
@@ -359,10 +294,10 @@ from.two <- function(X, y, omega, q.seq,
   for (i in 1:num.seq) {
     if(print.iter) {cat("i = ", i, "\n")}
     if (i > 1) {
-      if (warm.start) {
+      if (warm.start & i > 1) {
         start <- betas[i - 1, ]
       } else {
-        start <- betas[1, ]
+        start <- crossprod(solve(crossprod(X) + diag(p)), crossprod(X, y))
       }
 
       ti <- system.time(
@@ -376,9 +311,6 @@ from.two <- function(X, y, omega, q.seq,
       iters[i] <- CD[["iter"]]
       times[i] <- ti[3]
 
-    } else { # Need to check this
-      betas[i, ] <- crossprod(solve(crossprod(X) + diag(p)), crossprod(X, y))
-      iters[i] <- 1
     }
   }
 
@@ -405,43 +337,3 @@ get.omega.min <- function(q, dXtX, Xty) {
   (max(abs(Xty)*dXtX^((q - 1)/(2 - q)))/(2-q))*(2*(1 - q))^((1 - q)/(2 - q))*q^(1/(2 - q))
 }
 
-#' @export
-qfun <- function(q) {
-  (2-q)*(2*(1 - q))^((1 - q)/(q - 2))*q^(1/(q - 2))
-}
-
-#' @export
-get.q.max <- function(omega, Xty, eps = 10^(-7)) {
-  cut <- max(abs(Xty))/omega
-  low <- 10^(-16)
-  hig <- 1
-  qlow <- qfun(low)
-  qhig <- qfun(hig)
-
-  if (qlow < cut) {
-    q <- qlow
-  } else if (qhig > cut) {
-    q <- qhig
-  } else {
-    while (qlow - qhig > eps) {
-      mid <- (low + hig)/2
-      qmid <- qfun(mid)
-      # qs <- seq(low, hig, length.out = 10000)
-      # plot(qs, qfun(qs), type = "l")
-      # abline(v = c(low, mid, hig), lty = 3, col = c("red", "black", "blue"))
-      # abline(h = c(cut, qmid), lty = 3, col = c("black", "gray"))
-      if (qmid < cut) {
-        hig <- mid
-      } else {
-        low <- mid
-      }
-      qlow <- qfun(low)
-      qhig <- qfun(hig)
-
-    }
-    q <- (low + hig)/2
-  }
-
-  return(q)
-
-}
