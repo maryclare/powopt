@@ -293,12 +293,11 @@ from.two <- function(X, y, omega, q.seq,
 
   for (i in 1:num.seq) {
     if(print.iter) {cat("i = ", i, "\n")}
-    if (i > 1) {
-      if (warm.start & i > 1) {
-        start <- betas[i - 1, ]
-      } else {
-        start <- crossprod(solve(crossprod(X) + diag(p)), crossprod(X, y))
-      }
+    if (warm.start & i > 1) {
+      start <- betas[i - 1, ]
+    } else {
+      start <- crossprod(solve(crossprod(X) + diag(p)), crossprod(X, y))
+    }
 
       ti <- system.time(
         CD <- powCD(X, y, sigma.sq = 1, lambda = omega^(2 - q.seq[i])/q.seq[i],
@@ -312,7 +311,7 @@ from.two <- function(X, y, omega, q.seq,
       times[i] <- ti[3]
 
     }
-  }
+
 
 
   obj.bb <- objs[num.seq]
