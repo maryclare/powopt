@@ -4,7 +4,7 @@
 #'
 #' @description Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
 #' \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
-#' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
+#' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0} and \eqn{q > 0}. \cr \cr
 #'
 #' This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
 #' \deqn{y = X\beta + \sigma Z}
@@ -12,7 +12,7 @@
 #' where elements of Z are independent, standard normal random variates.
 #'
 #' This distribution for elements of \eqn{\beta} is a generalized normal distribution
-#' for \eqn{\beta} with scale \eqn{\alpha = \lambda^(-1/q)} and shape \eqn{\beta = q} (Box and Tiao, 1973).
+#' for \eqn{\beta} with scale \eqn{\alpha = \lambda^{-1/q}} and shape \eqn{\beta = q} (Box and Tiao, 1973).
 #'
 #' For \eqn{q \le 1}, uses coordinate descent algorithm given in Marjanovic and Solo (2014), modified to accomodate X that do not have standardized columns.
 #'
@@ -120,6 +120,16 @@ powCD <- function(X, y, sigma.sq, lambda, q, max.iter = 10000,
         z.k.i <- (crossprod(X[, i], y - crossprod(t(X[, -i]), bb[-i])))/X.ii
         lambda.ii <- lambda/X.ii
         b.kp.i <- powThresh(z.k.i, lambda = lambda.ii, q = q)
+
+        if (q < 1) {
+          betaLambda = (2*lambda*(1 - q))^(1/(2 - q))
+          hLambda = betaLambda + lambda*q*betaLambda^(q - 1)
+
+          if (abs(z.k.i) == hLambda) {
+            b.kp.i <- sign(z.k.i)*betaLambda*(bb[i] != 0)
+          }
+        }
+
         if (is.na(b.kp.i)) {return(rep(NA, p))}
         rr <- rr - (b.kp.i - bb[i])*X[, i]
         bb[i] <- b.kp.i

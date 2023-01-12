@@ -52,7 +52,7 @@ Note that a non-\code{NA} solution for \eqn{\beta} for any value of \eqn{q} guar
 \description{
 Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
 \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
-for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0 0} and \eqn{q > 0}. \cr \cr
+for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0} and \eqn{q > 0}. \cr \cr
 
 This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
 \deqn{y = X\beta + \sigma Z}
@@ -60,7 +60,7 @@ This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eq
 where elements of Z are independent, standard normal random variates.
 
 This distribution for elements of \eqn{\beta} is a generalized normal distribution
-for \eqn{\beta} with scale \eqn{\alpha = \lambda^(-1/q)} and shape \eqn{\beta = q} (Box and Tiao, 1973).
+for \eqn{\beta} with scale \eqn{\alpha = \lambda^{-1/q}} and shape \eqn{\beta = q} (Box and Tiao, 1973).
 
 For \eqn{q \le 1}, uses coordinate descent algorithm given in Marjanovic and Solo (2014), modified to accomodate X that do not have standardized columns.
 }
