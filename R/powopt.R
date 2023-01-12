@@ -3,7 +3,7 @@
 #' @name powCD
 #'
 #' @description Gives the value of of the length \eqn{p} vector \eqn{\beta} that minimizes: \cr
-#' \deqn{(y - X\beta)^2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
+#' \deqn{||y - X\beta||^2_2/(2\sigma^2) + \lambda ||\beta||^q_q} \cr
 #' for fixed \eqn{y}, \eqn{X}, \eqn{\sigma^2 > 0}, \eqn{\lambda > 0} and \eqn{q > 0}. \cr \cr
 #'
 #' This corresponds to finding the posterior mode for \eqn{beta} given \eqn{X}, \eqn{y}, \eqn{\sigma^2}, \eqn{\lambda} and \eqn{q} under the model:
